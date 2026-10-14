@@ -140,3 +140,10 @@ data = {
 - Os dados ficam só no aparelho (sem conta, sem sincronização entre aparelhos): o backup é o caminho para levar os dados. O app pede armazenamento persistente ao navegador. Há bloqueio por PIN, mas sem criptografia dos dados guardados.
 - Valores são guardados em reais com duas casas (arredondados nos pontos críticos, como parcelas); migrar para centavos inteiros exigiria uma migração dos dados salvos.
 - Ideias: criptografar os dados com uma chave derivada do PIN, biometria (WebAuthn), sincronização (ex.: Supabase/Firebase — exige criar uma conta no serviço), metas de economia, comparação entre meses.
+
+## Continuidade para a próxima IA
+- Recorrência criada pelo formulário de gasto: `transactions.js` mostra a opção mensal com data inicial e final opcionais. A data inicial acompanha a data do gasto até o usuário editar o início manualmente. `recorrentes.js` respeita os limites exatos `startDate`/`endDate` e mantém compatibilidade com modelos antigos que só têm `startMonth`/`endMonth`. Recorrências desse formulário aceitam uma divisão única atribuída a Você; parcelas e divisões entre pessoas não são suportadas nesse fluxo.
+- Gráfico “Últimos 6 meses”: `index.html`, `graficos.js`, `main.js` e `components.css` implementam paginação lateral de um mês por vez; tocar em uma barra seleciona o mês no Resumo.
+- Linhas dos painéis do Resumo: `dashboard.js`, `ui.js` e `components.css` permitem clicar em gastos/entradas para abrir Lançamentos e destacar a linha. Pendências de reembolso também abrem o gasto; o botão de ação continua separado.
+- O cache do PWA está na versão `meu-controle-v22` em `sw.js`; incrementar a versão ao alterar arquivos do app.
+- Validação mais recente: navegação lateral do gráfico e navegação/destaque de linhas foram testados no navegador com dados temporários em memória. Diagnósticos do editor sem erros. A suíte `node --test` não foi executada nessa sessão porque Node.js/npm não estavam disponíveis no terminal.

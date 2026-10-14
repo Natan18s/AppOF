@@ -154,6 +154,13 @@ function transactionForm(t=null,type="expense"){
     `:`
       <div><label>Origem</label><select name="incomeSource"><option value="normal" ${t?.source!=="reimbursement"?"selected":""}>Entrada normal</option><option value="reimbursement" ${t?.source==="reimbursement"?"selected":""}>Reembolso recebido</option></select></div>
     `}</div>
+    ${isExpense&&!t?`<div class="full recurring-card-wrap" id="grpRecurring">
+      <label class="recurring-card" for="txRecurring"><input type="checkbox" id="txRecurring" name="recurring"><span><b>Repetir este gasto mensalmente</b><small>Cria um lançamento por mês durante o período escolhido.</small></span></label>
+      <div class="form-grid recurring-dates hidden" id="recurringDates">
+        <div><label>De</label><input name="recurringStartDate" id="recurringStartDate" type="date" value="${t?.date||defaultEntryDate()}"></div>
+        <div><label>Até (opcional)</label><input name="recurringEndDate" id="recurringEndDate" type="date"><div class="field-note">Deixe vazio para manter a recorrência sem data final.</div></div>
+      </div>
+    </div>`:""}
     ${isExpense?`<div class="split-header"><div><b>Divisão do gasto por pessoa</b><div class="field-note">Por padrão o valor total fica com Você. Ao adicionar pessoas, o valor é dividido igualmente entre elas (dá para ajustar depois).</div></div><div class="split-actions"><button type="button" class="btn equal-btn" id="splitEqual">Dividir igualmente</button><button type="button" class="btn" id="addSplit">Adicionar pessoas</button></div></div><div id="splitList">${splits.map((s,i)=>splitRow(s,i,data.categories,data.people)).join("")}</div><div class="split-total"><span>Total dividido</span><span id="splitSum">${fmtMoney(splits.reduce((a,x)=>a+Number(x.amount||0),0))}</span></div><div class="field-note" id="splitHint"></div>`:""}
     <div class="row-actions end" style="margin-top:15px"><button type="button" class="btn ghost" id="cancelTx">Cancelar</button><button class="btn primary">Salvar</button></div>
   </form>`;
@@ -206,6 +213,7 @@ function openTransactionModal(type="expense",tx=null){
   // Gasto: liga os comportamentos automáticos do formulário (forma de pagamento, vencimento, status, divisão e parcelas)
   if(type==="expense"){
     const list=$("splitList");
+    let recurringStartTouched=false;
     autoSplit=!tx; payTouched=!!tx; firstMonthTouched=!!tx; statusTouched=!!tx;
     // show(): mostra ou esconde um grupo de campos (e desativa os inputs dele quando escondido)
     const show=(id,on)=>{const g=$(id);g.classList.toggle("hidden",!on);g.querySelectorAll("input,select").forEach(i=>{i.disabled=!on||i.dataset.lock==="1"})};
@@ -223,6 +231,11 @@ function openTransactionModal(type="expense",tx=null){
     const refreshMethod=()=>{
       const m=$("txMethod").value,credit=isCreditMethod(m),inst=m==="installment";
       show("grpCard",credit);show("grpPay",credit);show("grpInst",inst);   // Pix/Débito/Dinheiro: cartão, vencimento e parcelas somem (não são validados); o status continua editável
+      if($("grpRecurring")){
+        if(inst) $("txRecurring").checked=false;
+        show("grpRecurring",!inst);
+        syncRecurringDates();
+      }
       if(!statusTouched)$("txStatus").value=credit?"planned":"paid";   // padrão automático, mas o usuário pode mudar
       $("txValueLabel").textContent=tx&&tx.installments>1?"Valor desta parcela":(inst&&!tx?"Valor total da compra":"Valor total");
       $("valueNote").textContent=inst&&!tx?"Será dividido pelo total de parcelas.":"";
@@ -239,14 +252,25 @@ function openTransactionModal(type="expense",tx=null){
       autoSplit=true;distributeEqual();   // recalcula o valor entre todas as pessoas
       if(data.people.length<2)toast("Use \"Criar pessoa\" (acima de Quem paga?) para cadastrar quem divide o gasto.");
     };
+    const syncRecurringDates=()=>{
+      const enabled=$("txRecurring").checked;
+      $("recurringDates").classList.toggle("hidden",!enabled);
+      $("recurringStartDate").required=enabled;
+    };
     // Ligações dos botões e campos do formulário (cada alteração recalcula a prévia de parcelas e a divisão)
     $("addSplit").onclick=addPerson;
     $("splitEqual").onclick=()=>{autoSplit=true;distributeEqual()};
     [...list.children].forEach(bindSplitRow);
     $("txMethod").addEventListener("change",refreshMethod);
+    if($("txRecurring")) $("txRecurring").addEventListener("change",syncRecurringDates);
     $("txStatus").addEventListener("change",()=>{statusTouched=true});
     $("txCard").addEventListener("change",()=>{if(!tx&&!payTouched)autoPaymentDate();syncPaymentRules();renderInstallPreview()});
-    $("txDate").addEventListener("change",()=>{if(!tx&&!payTouched&&isCreditMethod($("txMethod").value))autoPaymentDate();syncPaymentRules();renderInstallPreview()});
+    $("txDate").addEventListener("change",()=>{
+      if(!recurringStartTouched&&$("recurringStartDate"))$("recurringStartDate").value=$("txDate").value;
+      if(!tx&&!payTouched&&isCreditMethod($("txMethod").value))autoPaymentDate();
+      syncPaymentRules();renderInstallPreview();
+    });
+    if($("recurringStartDate")) $("recurringStartDate").addEventListener("input",()=>{recurringStartTouched=true});
     $("txPaymentDate").addEventListener("input",()=>{payTouched=true;syncPaymentRules();renderInstallPreview()});
     $("txFirstMonth").addEventListener("input",()=>{firstMonthTouched=true;renderInstallPreview()});
     $("txInstallments").addEventListener("input",renderInstallPreview);
@@ -339,9 +363,16 @@ function scaleSplits(splits,part,total){
 function saveExpenseFromForm(existingId){
   const f=new FormData($("txForm")),value=Number(f.get("value")||0),splits=collectSplits(),sum=splits.reduce((s,x)=>s+x.amount,0);
   const method=f.get("method")||"pix",credit=isCreditMethod(method),date=f.get("date");
+  const wantsRecurring=!existingId&&$("txRecurring")?.checked;
   if(!value){askAlert("Informe um valor.");return}
   if(Math.abs(sum-value)>0.005){askAlert("A soma das partes precisa ser exatamente igual ao valor total.");return}
   if(credit&&!f.get("cardId")){askAlert("Selecione o cartão.");return}
+  if(wantsRecurring){
+    const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
+    if(!startDate){askAlert("Informe a data inicial da recorrência.");return}
+    if(endDate&&endDate<startDate){askAlert("A data final não pode ser antes da data inicial.");return}
+    if(splits.length!==1||splits[0].ownerId!=="self"||Math.abs(splits[0].amount-value)>0.005){askAlert("Para repetir, o gasto precisa ter uma única divisão atribuída a Você.");return}
+  }
   let n=1,start=1;
   if(method==="installment"&&!existingId){
     n=Number(f.get("installments")||0);start=Number(f.get("startInstallment")||1);
@@ -355,6 +386,14 @@ function saveExpenseFromForm(existingId){
     data.transactions=data.transactions.map(t=>t.id===existingId?{...old,...base}:t);
     logActivity("edit",`Gasto editado: ${base.description}`,`${fmtMoney(base.value)} · ${expenseDestination({...old,...base})}`,existingId);
     toast("Gasto atualizado");
+  }else if(wantsRecurring){
+    const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
+    const recurring={id:uid(),type:"expense",description:base.description,value,day:Number(startDate.slice(8,10)),startMonth:startDate.slice(0,7),endMonth:endDate?endDate.slice(0,7):"",startDate,endDate,method:base.method,cardId:base.cardId,category:splits[0].category,active:true,generated:[],createdAt:Date.now()};
+    (data.recurring=data.recurring||[]).push(recurring);
+    const count=generateRecurring();
+    const rangeLabel=endDate?`até ${fmtDate(endDate)}`:"em diante";
+    logActivity("create",`Gasto recorrente: ${base.description}`,`${fmtMoney(value)} · de ${fmtDate(startDate)} ${rangeLabel}`);
+    toast(count?`Recorrência salva · ${count} lançamento(s) criado(s)`:"Recorrência salva");
   }else if(method==="installment"){
     const rem=n-start+1,totalCents=Math.round(value*100),per=Math.floor(totalCents/n),first=f.get("firstMonth")||date.slice(0,7),day=date.slice(8,10),pay=base.paymentDate;
     for(let i=0;i<rem;i++){

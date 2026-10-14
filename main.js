@@ -47,6 +47,8 @@ document.querySelectorAll(".metric[data-metric]").forEach(el=>{
   el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();showMetricDetail(el.dataset.metric)}});
 });
 $("bulkPaymentDate").onclick=()=>openBulkPaymentModal();
+$("trendPrev").onclick=()=>shiftTrendWindow(-1);
+$("trendNext").onclick=()=>shiftTrendWindow(1);
 $("bulkClearPayment").onclick=clearBulkPaymentDate;
 $("bulkDelete").onclick=bulkDelete;
 $("clearSelection").onclick=()=>{selectedTxIds.clear();renderTransactions()};

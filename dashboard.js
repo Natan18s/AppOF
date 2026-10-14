@@ -89,8 +89,13 @@ function renderDashboard(){
   $("receivableBadge").textContent=pend.length?`${pend.length} · ${fmtMoney(pendTotal)}`:"nenhuma";
   $("receivableList").innerHTML=pend.length ? pend.map(({t,s,idx})=>{
     const p=data.people.find(x=>x.id===s.ownerId);
-    return `<div class="reimbursed-row"><div><b>${esc(p?.name||"Outra pessoa")}</b> · ${fmtMoney(s.amount)}${s.category===LOAN_CATEGORY?' <span class="tag">Empréstimo</span>':""}<div class="muted">${esc(t.description)} · compra ${fmtDate(t.date)} · pagamento ${fmtDate(t.paymentDate||t.date)}</div></div><button class="btn" onclick="markReimbursement('${t.id}',${idx})">Marcar como recebido</button></div>`;
+    return `<div class="reimbursed-row" data-tx-id="${esc(t.id)}" title="Ver em Lançamentos"><div><b>${esc(p?.name||"Outra pessoa")}</b> · ${fmtMoney(s.amount)}${s.category===LOAN_CATEGORY?' <span class="tag">Empréstimo</span>':""}<div class="muted">${esc(t.description)} · compra ${fmtDate(t.date)} · pagamento ${fmtDate(t.paymentDate||t.date)}</div></div><button class="btn" onclick="markReimbursement('${t.id}',${idx})">Marcar como recebido</button></div>`;
   }).join("") : '<div class="empty">Nenhum reembolso pendente neste mês.</div>';
+  $("receivableList").onclick=e=>{
+    if(e.target.closest("button"))return;
+    const row=e.target.closest("[data-tx-id]");
+    if(row)goToTransaction(row.dataset.txId);
+  };
 
   // Últimos lançamentos: registro do que foi feito (independe do mês), do mais novo para o mais antigo
   const log=data.activityLog||[];
@@ -111,7 +116,7 @@ function detailTable(rows,valueOf){
   const body=rows.map(t=>{
     const v=valueOf(t), par=t.installments>1?`${t.installmentNo||1}/${t.installments}`:"—";
     const sub=Math.abs(v-t.value)>0.004?`<div class="muted">de ${fmtMoney(t.value)}</div>`:"";
-    return `<tr><td class="c-date" data-label="Data">${fmtDate(t.date)}</td><td class="c-desc"><b>${esc(t.description)}</b>${t.notes?`<div class="muted">${esc(t.notes)}</div>`:""}</td><td data-label="Forma">${paymentLabel(t)}</td><td data-label="Responsável">${peopleLabels(t)}</td><td data-label="Pag. previsto">${paymentDateLabel(t)}</td><td class="${par==="—"?"c-empty":""}" data-label="Parcelas">${par}</td><td class="right negative c-val">- ${fmtMoney(v)}${sub}</td></tr>`;
+    return `<tr data-tx-id="${esc(t.id)}"><td class="c-date" data-label="Data">${fmtDate(t.date)}</td><td class="c-desc"><b>${esc(t.description)}</b>${t.notes?`<div class="muted">${esc(t.notes)}</div>`:""}</td><td data-label="Forma">${paymentLabel(t)}</td><td data-label="Responsável">${peopleLabels(t)}</td><td data-label="Pag. previsto">${paymentDateLabel(t)}</td><td class="${par==="—"?"c-empty":""}" data-label="Parcelas">${par}</td><td class="right negative c-val">- ${fmtMoney(v)}${sub}</td></tr>`;
   }).join("");
   return `<div class="table-wrap detail-table"><table><thead><tr><th>Data</th><th>Descrição</th><th>Forma</th><th>Responsável</th><th>Pagamento previsto</th><th>Parcelas</th><th class="right">Valor</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
@@ -127,7 +132,7 @@ function showCategoryDetail(cat){
 // Tabela de entradas usada no painel de detalhe das entradas.
 function incomeDetailTable(rows){
   if(!rows.length) return '<div class="empty">Nenhuma entrada.</div>';
-  const body=rows.map(t=>`<tr><td class="c-date" data-label="Data">${fmtDate(t.date)}</td><td class="c-desc"><b>${esc(t.description)}</b>${t.notes?`<div class="muted">${esc(t.notes)}</div>`:""}</td><td class="right positive c-val">+ ${fmtMoney(t.value)}</td></tr>`).join("");
+  const body=rows.map(t=>`<tr data-tx-id="${esc(t.id)}"><td class="c-date" data-label="Data">${fmtDate(t.date)}</td><td class="c-desc"><b>${esc(t.description)}</b>${t.notes?`<div class="muted">${esc(t.notes)}</div>`:""}</td><td class="right positive c-val">+ ${fmtMoney(t.value)}</td></tr>`).join("");
   return `<div class="table-wrap detail-table"><table><thead><tr><th>Data</th><th>Descrição</th><th class="right">Valor</th></tr></thead><tbody>${body}</tbody></table></div>`;
 }
 

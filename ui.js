@@ -61,6 +61,11 @@ function goToTransaction(id){
 function openModal(title, body){
   $("modalTitle").textContent=title;
   $("modalBody").innerHTML=body;
+  $("modalBody").onclick=e=>{
+    if(e.target.closest("button,a,input,select"))return;
+    const row=e.target.closest("[data-tx-id]");
+    if(row)goToTransaction(row.dataset.txId);
+  };
   $("modal").classList.remove("hidden");
   document.documentElement.classList.add("modal-open");   // só o painel rola; a tela de trás fica parada
   $("modal").querySelector(".modal-box").scrollTop=0;

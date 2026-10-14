@@ -6,6 +6,9 @@
 
 // Cores das fatias da rosca (funcionam nos dois temas).
 const CHART_COLORS=["#3b6cf6","#f59e0b","#10b981","#ef4444","#8b5cf6","#06b6d4","#ec4899","#94a3b8"];
+let trendMonthOffset=0;
+
+function shiftTrendWindow(offset){trendMonthOffset+=offset;renderTrendChart()}
 
 // Valor curto para eixos: R$ 850, R$ 1,2 mil, R$ 15 mil, R$ 1,5 mi.
 function fmtCompact(v){
@@ -31,7 +34,9 @@ function renderCharts(){ renderTrendChart(); renderDonutChart(); renderBudgets()
 // Barras dos últimos 6 meses: entradas (verde) x gasto realmente seu (vermelho). Tocar num mês muda o mês visto.
 function renderTrendChart(){
   const box=$("chartTrend"); if(!box) return;
-  const s=monthlySeries(month,6);
+  const endMonth=shiftMonthStr(month,trendMonthOffset),s=monthlySeries(endMonth,6),[startYear,startMonth]=s[0].month.split("-"),[endYear,endMonthNumber]=endMonth.split("-");
+  const periodLabel=`${MONTHS_PT[Number(startMonth)-1].slice(0,3)}/${startYear.slice(2)}–${MONTHS_PT[Number(endMonthNumber)-1].slice(0,3)}/${endYear.slice(2)}`;
+  if($("trendPeriodLabel")) $("trendPeriodLabel").textContent=periodLabel;
   if(s.every(x=>x.income===0&&x.own===0)){ box.innerHTML='<div class="empty">Sem entradas nem gastos nestes 6 meses.</div>'; return; }
   const W=420,H=250,L=50,R=6,T=12,B=46,plotW=W-L-R,plotH=H-T-B,gw=plotW/s.length,bw=Math.min(26,gw/2-5);
   const sc=niceScale(Math.max(...s.flatMap(x=>[x.income,x.own]))), top=sc.top;
@@ -51,8 +56,8 @@ function renderTrendChart(){
   svg+="</svg>";
   box.innerHTML=svg+`<div class="chart-legend"><span><i style="background:var(--green)"></i>Entradas</span><span><i style="background:var(--red)"></i>Gasto realmente seu</span></div><div class="chart-note">Número embaixo de cada mês = saldo do mês. Toque num mês para vê-lo.</div>`;
   box.querySelectorAll("[data-m]").forEach(el=>{
-    el.onclick=()=>setMonth(el.dataset.m);
-    el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();setMonth(el.dataset.m)}};
+    el.onclick=()=>{trendMonthOffset=0;setMonth(el.dataset.m)};
+    el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();trendMonthOffset=0;setMonth(el.dataset.m)}};
   });
 }
 

@@ -137,6 +137,14 @@ test("recorrentes: gera do mês inicial até o mês seguinte ao atual", () => {
   assert.deepEqual(meses, ["2026-09-08", "2026-10-08", "2026-11-08"]);
 });
 
+test("recorrentes: respeita datas exatas de início e fim", () => {
+  const { run } = novoAmbiente(); run(MODELOS);
+  run(`data.recurring.push({id:"r5",type:"expense",description:"Serviço",value:80,day:20,startMonth:"2026-10",endMonth:"2026-12",startDate:"2026-10-20",endDate:"2026-12-10",method:"pix",cardId:"",category:"Casa",active:true,generated:[]})`);
+  run('generateRecurring("2026-11-15")');
+  const dates=JSON.parse(run('JSON.stringify(data.transactions.filter(t=>t.recurringId==="r5").map(t=>t.date).sort())'));
+  assert.deepEqual(dates,["2026-10-20","2026-11-20"]);
+});
+
 test("recorrentes: rodar de novo não duplica nada", () => {
   const { run } = novoAmbiente(); run(MODELOS);
   run('generateRecurring("2026-10-09")');

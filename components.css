@@ -35,6 +35,13 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.modal-head h2{margin:0;font-size:20px}
 .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.full{grid-column:1/-1}
 .split-header{display:flex;justify-content:space-between;align-items:center;margin:15px 0 8px;gap:10px}
+.recurring-card-wrap{display:grid;gap:10px}
+.recurring-card{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--soft);cursor:pointer}
+.recurring-card input{width:18px;height:18px;accent-color:var(--btn);flex:none}
+.recurring-card span,.recurring-card small{display:block}
+.recurring-card b{font-size:13px}
+.recurring-card small{margin-top:2px;color:var(--muted);font-size:11px}
+.recurring-dates{padding:0 1px}
 .split{display:grid;grid-template-columns:minmax(0,1.2fr) 120px minmax(0,190px) minmax(0,1fr) 40px;gap:7px;align-items:end;background:var(--soft);padding:9px;border:1px solid var(--line);border-radius:12px;margin-bottom:7px}
 .split>*{min-width:0}
 .split small{display:block;color:var(--muted)}
@@ -236,6 +243,13 @@ tr.sheet-dragging td{opacity:.35}
 .chart-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;margin-top:8px;align-items:center}
 .chart-note{font-size:11.5px;color:var(--muted);margin-top:4px}
 .chart-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.trend-nav{display:flex;align-items:center;gap:6px;flex:none}
+.trend-nav .btn{width:34px;height:34px;padding:0;font-size:20px;line-height:1}
+.trend-nav .muted{font-size:11px;white-space:nowrap}
+.detail-table tbody tr[data-tx-id]{cursor:pointer}
+.detail-table tbody tr[data-tx-id]:hover{background:var(--hover)}
+.reimbursed-row[data-tx-id]{cursor:pointer}
+.reimbursed-row[data-tx-id]:hover{background:var(--hover)}
 .donut-wrap{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
 .chart-svg.donut{width:190px;flex:none}
 .chart-svg.donut .c-ring{stroke:var(--chip)}

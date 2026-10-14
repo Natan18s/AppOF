@@ -40,6 +40,8 @@ function generateRecurring(now=today()){
   (data.recurring||[]).forEach(r=>{
     recurringMonths(r,upTo).forEach(m=>{
       const t=buildRecurringTransaction(r,m,now);
+      if(r.startDate&&t.date<r.startDate) return;
+      if(r.endDate&&t.date>r.endDate) return;
       t.createdAt+=count;   // mantém a ordem de criação
       data.transactions.push(t);
       (r.generated=r.generated||[]).push(m);
@@ -52,6 +54,7 @@ function generateRecurring(now=today()){
 
 // Texto curto de "quando acontece", para a lista: "todo dia 5 · desde 10/2026 · até 12/2026".
 function recurringWhen(r){
+  if(r.startDate) return `todo dia ${r.day} · de ${fmtDate(r.startDate)}${r.endDate?` · até ${fmtDate(r.endDate)}`:" · sem data final"}`;
   return `todo dia ${r.day} · desde ${fmtMonthLabel(r.startMonth)}${r.endMonth?` · até ${fmtMonthLabel(r.endMonth)}`:" · sem data final"}`;
 }
 
