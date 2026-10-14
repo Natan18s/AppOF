@@ -154,8 +154,8 @@ function transactionForm(t=null,type="expense"){
     `:`
       <div><label>Origem</label><select name="incomeSource"><option value="normal" ${t?.source!=="reimbursement"?"selected":""}>Entrada normal</option><option value="reimbursement" ${t?.source==="reimbursement"?"selected":""}>Reembolso recebido</option></select></div>
     `}</div>
-    ${isExpense&&!t?`<div class="full recurring-card-wrap" id="grpRecurring">
-      <label class="recurring-card" for="txRecurring"><input type="checkbox" id="txRecurring" name="recurring"><span><b>Repetir este gasto mensalmente</b><small>Cria um lançamento por mês durante o período escolhido.</small></span></label>
+    ${!t?`<div class="full recurring-card-wrap" id="grpRecurring">
+      <label class="recurring-card" for="txRecurring"><input type="checkbox" id="txRecurring" name="recurring"><span><b>Repetir esta ${isExpense?"despesa":"entrada"} mensalmente</b><small>Cria um lançamento por mês durante o período escolhido.</small></span></label>
       <div class="form-grid recurring-dates hidden" id="recurringDates">
         <div><label>De</label><input name="recurringStartDate" id="recurringStartDate" type="date" value="${t?.date||defaultEntryDate()}"></div>
         <div><label>Até (opcional)</label><input name="recurringEndDate" id="recurringEndDate" type="date"><div class="field-note">Deixe vazio para manter a recorrência sem data final.</div></div>
@@ -208,12 +208,19 @@ function renderInstallPreview(){
 }
 
 // Abre o formulário de gasto/entrada e liga todos os comportamentos automáticos (vencimento, status, divisão, parcelas).
+function syncRecurringDateFields(){
+  if(!$("txRecurring"))return;
+  const enabled=$("txRecurring").checked;
+  $("recurringDates").classList.toggle("hidden",!enabled);
+  $("recurringStartDate").required=enabled;
+}
+
 function openTransactionModal(type="expense",tx=null){
   openModal(tx?(type==="expense"?"Editar gasto":"Editar entrada"):(type==="expense"?"Novo gasto":"Nova entrada"),transactionForm(tx,type));
+  let recurringStartTouched=false;
   // Gasto: liga os comportamentos automáticos do formulário (forma de pagamento, vencimento, status, divisão e parcelas)
   if(type==="expense"){
     const list=$("splitList");
-    let recurringStartTouched=false;
     autoSplit=!tx; payTouched=!!tx; firstMonthTouched=!!tx; statusTouched=!!tx;
     // show(): mostra ou esconde um grupo de campos (e desativa os inputs dele quando escondido)
     const show=(id,on)=>{const g=$(id);g.classList.toggle("hidden",!on);g.querySelectorAll("input,select").forEach(i=>{i.disabled=!on||i.dataset.lock==="1"})};
@@ -234,7 +241,7 @@ function openTransactionModal(type="expense",tx=null){
       if($("grpRecurring")){
         if(inst) $("txRecurring").checked=false;
         show("grpRecurring",!inst);
-        syncRecurringDates();
+        syncRecurringDateFields();
       }
       if(!statusTouched)$("txStatus").value=credit?"planned":"paid";   // padrão automático, mas o usuário pode mudar
       $("txValueLabel").textContent=tx&&tx.installments>1?"Valor desta parcela":(inst&&!tx?"Valor total da compra":"Valor total");
@@ -252,25 +259,17 @@ function openTransactionModal(type="expense",tx=null){
       autoSplit=true;distributeEqual();   // recalcula o valor entre todas as pessoas
       if(data.people.length<2)toast("Use \"Criar pessoa\" (acima de Quem paga?) para cadastrar quem divide o gasto.");
     };
-    const syncRecurringDates=()=>{
-      const enabled=$("txRecurring").checked;
-      $("recurringDates").classList.toggle("hidden",!enabled);
-      $("recurringStartDate").required=enabled;
-    };
     // Ligações dos botões e campos do formulário (cada alteração recalcula a prévia de parcelas e a divisão)
     $("addSplit").onclick=addPerson;
     $("splitEqual").onclick=()=>{autoSplit=true;distributeEqual()};
     [...list.children].forEach(bindSplitRow);
     $("txMethod").addEventListener("change",refreshMethod);
-    if($("txRecurring")) $("txRecurring").addEventListener("change",syncRecurringDates);
     $("txStatus").addEventListener("change",()=>{statusTouched=true});
     $("txCard").addEventListener("change",()=>{if(!tx&&!payTouched)autoPaymentDate();syncPaymentRules();renderInstallPreview()});
     $("txDate").addEventListener("change",()=>{
-      if(!recurringStartTouched&&$("recurringStartDate"))$("recurringStartDate").value=$("txDate").value;
       if(!tx&&!payTouched&&isCreditMethod($("txMethod").value))autoPaymentDate();
       syncPaymentRules();renderInstallPreview();
     });
-    if($("recurringStartDate")) $("recurringStartDate").addEventListener("input",()=>{recurringStartTouched=true});
     $("txPaymentDate").addEventListener("input",()=>{payTouched=true;syncPaymentRules();renderInstallPreview()});
     $("txFirstMonth").addEventListener("input",()=>{firstMonthTouched=true;renderInstallPreview()});
     $("txInstallments").addEventListener("input",renderInstallPreview);
@@ -280,6 +279,13 @@ function openTransactionModal(type="expense",tx=null){
     $("txDescription").addEventListener("input",e=>{if(!tx){const first=$("splitList").querySelector(".split-category");if(first&&first.value==="Outros")first.value=applyRule(e.target.value)}});
     if(autoSplit)distributeEqual();
     refreshMethod();updateSplitTotal();
+  }
+  if($("txRecurring")){
+    $("txRecurring").addEventListener("change",syncRecurringDateFields);
+    $("txDate").addEventListener("change",()=>{
+      if(!recurringStartTouched)$("recurringStartDate").value=$("txDate").value;
+    });
+    $("recurringStartDate").addEventListener("input",()=>{recurringStartTouched=true});
   }
   // Cancelar fecha o painel; enviar o formulário salva como gasto ou como entrada
   $("cancelTx").onclick=closeModal;
@@ -415,7 +421,14 @@ function saveExpenseFromForm(existingId){
 // Valida e salva a entrada do formulário (nova ou edição).
 function saveIncomeFromForm(existingId){
   const f=new FormData($("txForm")),value=Number(f.get("value")||0);
+  const wantsRecurring=!existingId&&$("txRecurring")?.checked;
   if(!value){askAlert("Informe um valor.");return}
+  if(wantsRecurring){
+    const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
+    if(!startDate){askAlert("Informe a data inicial da recorrência.");return}
+    if(endDate&&endDate<startDate){askAlert("A data final não pode ser antes da data inicial.");return}
+    if(f.get("incomeSource")==="reimbursement"){askAlert("Reembolsos não podem ser registrados como entradas recorrentes.");return}
+  }
   const base={date:f.get("date"),description:f.get("description"),value,type:"income",source:f.get("incomeSource")||"normal"};   // sem "notes": a observação antiga é preservada na edição
   const where=`${base.source==="reimbursement"?"Reembolso recebido":"Entrada normal"} · entra em ${fmtDate(base.date)} (${fmtMonthLabel(base.date)})`;
   if(existingId){
@@ -423,6 +436,14 @@ function saveIncomeFromForm(existingId){
     data.transactions=data.transactions.map(t=>t.id===existingId?{...old,...base}:t);
     logActivity("edit",`Entrada editada: ${base.description}`,`${fmtMoney(value)} · ${where}`,existingId);
     toast("Entrada atualizada");
+  }else if(wantsRecurring){
+    const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
+    const recurring={id:uid(),type:"income",description:base.description,value,day:Number(startDate.slice(8,10)),startMonth:startDate.slice(0,7),endMonth:endDate?endDate.slice(0,7):"",startDate,endDate,active:true,generated:[],createdAt:Date.now()};
+    (data.recurring=data.recurring||[]).push(recurring);
+    const count=generateRecurring();
+    const rangeLabel=endDate?`até ${fmtDate(endDate)}`:"em diante";
+    logActivity("create",`Entrada recorrente: ${base.description}`,`${fmtMoney(value)} · de ${fmtDate(startDate)} ${rangeLabel}`);
+    toast(count?`Recorrência salva · ${count} lançamento(s) criado(s)`:"Recorrência salva");
   }else{
     const nt={...base,id:uid(),createdAt:Date.now()};
     data.transactions.push(nt);

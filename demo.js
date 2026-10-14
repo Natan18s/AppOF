@@ -106,13 +106,19 @@ async function exitDemo(){
 }
 
 // Cartão de boas-vindas do Resumo: aparece só enquanto não há nenhum lançamento (e fora da demonstração).
+function renderWelcomeCard(el,prefix,visible,emptyState=false){
+  if(!el)return;
+  el.classList.toggle("hidden",!visible);
+  if(!visible){el.innerHTML="";return}
+  const demo=isDemoMode();
+  const intro=emptyState?"Ainda não há lançamentos. Comece registrando o primeiro gasto ou entrada. Se quiser só conhecer o app, veja-o com dados de exemplo.":"Registre um gasto ou uma entrada, ou explore o app com dados fictícios de exemplo.";
+  el.innerHTML=`<h2>👋 Bem-vindo ao Meu Controle!</h2><p class="muted">${intro} ${demo?"Você está vendo dados fictícios; seus dados reais ficam guardados.":"Seus dados reais ficam guardados e voltam ao sair da demonstração."}</p><div class="row-actions"><button class="btn primary" id="${prefix}Expense">Registrar gasto</button><button class="btn" id="${prefix}Income">Registrar entrada</button><button class="btn" id="${prefix}Demo">${demo?"Sair dos dados de exemplo":"Ver com dados de exemplo"}</button></div>`;
+  $(`${prefix}Expense`).onclick=()=>openTransactionModal("expense");
+  $(`${prefix}Income`).onclick=()=>openTransactionModal("income");
+  $(`${prefix}Demo`).onclick=demo?exitDemo:startDemo;
+}
+
 function renderWelcome(){
-  const el=$("welcomeCard"); if(!el) return;
-  const show=!isDemoMode()&&data.transactions.length===0;
-  el.classList.toggle("hidden",!show);
-  if(!show){ el.innerHTML=""; return; }
-  el.innerHTML='<h2>👋 Bem-vindo ao Meu Controle!</h2><p class="muted">Ainda não há lançamentos. Comece registrando o primeiro gasto ou entrada. Se quiser só conhecer o app, veja-o com dados de exemplo (seus dados reais ficam intocados).</p><div class="row-actions"><button class="btn primary" id="welcomeExpense">Registrar gasto</button><button class="btn" id="welcomeIncome">Registrar entrada</button><button class="btn" id="welcomeDemo">Ver com dados de exemplo</button></div>';
-  $("welcomeExpense").onclick=()=>openTransactionModal("expense");
-  $("welcomeIncome").onclick=()=>openTransactionModal("income");
-  $("welcomeDemo").onclick=startDemo;
+  renderWelcomeCard($("welcomeCard"),"welcome",!isDemoMode()&&data.transactions.length===0,true);
+  renderWelcomeCard($("tutorialWelcomeCard"),"tutorialWelcome",true);
 }

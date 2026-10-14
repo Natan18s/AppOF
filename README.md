@@ -9,7 +9,7 @@ App de organização financeira em HTML + CSS + JavaScript puro (sem instalar na
 - **Resumo do mês** pela data de pagamento: cards, Planilha do mês, saídas pagas x previstas, fluxo de caixa, pendências de reembolso.
 - **Gráficos** (SVG): últimos 6 meses (entradas x gasto seu x saldo) e rosca com a distribuição das saídas.
 - **Orçamento por categoria**: limite mensal definido na categoria; barras verde / atenção (80%) / estourado (100%).
-- **Recorrentes**: aluguel, assinaturas, salário... criados automaticamente todo mês.
+- **Recorrentes**: gastos e entradas (aluguel, assinaturas, salário...) criados automaticamente todo mês.
 - **Aba Regras**: Categorias (arrastar para ordenar), Pessoas, Recorrentes e Regras automáticas.
 - **Importar** extrato CSV/OFX, **backup** (arquivo, compartilhar, copiar/colar), **relatórios** (CSV do mês/todos e PDF do Resumo pela impressão).
 - **Segurança:** bloqueio por PIN (4 a 8 números, guardado só como hash PBKDF2 com sal) e **Verificar dados** (acha inconsistências e corrige o que é seguro).
@@ -142,8 +142,9 @@ data = {
 - Ideias: criptografar os dados com uma chave derivada do PIN, biometria (WebAuthn), sincronização (ex.: Supabase/Firebase — exige criar uma conta no serviço), metas de economia, comparação entre meses.
 
 ## Continuidade para a próxima IA
-- Recorrência criada pelo formulário de gasto: `transactions.js` mostra a opção mensal com data inicial e final opcionais. A data inicial acompanha a data do gasto até o usuário editar o início manualmente. `recorrentes.js` respeita os limites exatos `startDate`/`endDate` e mantém compatibilidade com modelos antigos que só têm `startMonth`/`endMonth`. Recorrências desse formulário aceitam uma divisão única atribuída a Você; parcelas e divisões entre pessoas não são suportadas nesse fluxo.
+- Recorrência criada pelos formulários de gasto e entrada: `transactions.js` mostra a opção mensal com data inicial e final opcionais nos botões do cabeçalho e da aba Lançamentos. A data inicial acompanha a data do lançamento até o usuário editar o início manualmente. `recorrentes.js` respeita os limites exatos `startDate`/`endDate` e mantém compatibilidade com modelos antigos que só têm `startMonth`/`endMonth`. Gastos recorrentes aceitam uma divisão única atribuída a Você; parcelas, divisões entre pessoas e reembolsos recorrentes não são suportados.
 - Gráfico “Últimos 6 meses”: `index.html`, `graficos.js`, `main.js` e `components.css` implementam paginação lateral de um mês por vez; tocar em uma barra seleciona o mês no Resumo.
 - Linhas dos painéis do Resumo: `dashboard.js`, `ui.js` e `components.css` permitem clicar em gastos/entradas para abrir Lançamentos e destacar a linha. Pendências de reembolso também abrem o gasto; o botão de ação continua separado.
-- O cache do PWA está na versão `meu-controle-v22` em `sw.js`; incrementar a versão ao alterar arquivos do app.
-- Validação mais recente: navegação lateral do gráfico e navegação/destaque de linhas foram testados no navegador com dados temporários em memória. Diagnósticos do editor sem erros. A suíte `node --test` não foi executada nessa sessão porque Node.js/npm não estavam disponíveis no terminal.
+- Cartão “Bem-vindo ao Meu Controle”: `index.html` e `demo.js` mostram os mesmos atalhos também na aba Tutorial, com texto neutro mesmo quando já existem lançamentos.
+- O cache do PWA está na versão `meu-controle-v24` em `sw.js`; incrementar a versão ao alterar arquivos do app.
+- Validação mais recente: cartão do Tutorial e atalhos de gasto/entrada/demonstração testados no navegador; cancelar a confirmação de demonstração não alterou os dados. Opções recorrentes verificadas nos quatro botões de gasto/entrada; criação de entrada recorrente gerou os meses esperados. Sincronização automática e edição manual da data inicial testadas para gasto e entrada. Os testes no navegador usaram dados temporários em memória. Diagnósticos do editor sem erros. A suíte `node --test` não foi executada nessa sessão porque Node.js/npm não estavam disponíveis no terminal.
