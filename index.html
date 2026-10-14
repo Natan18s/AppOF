@@ -11,10 +11,24 @@
 <link rel="stylesheet" href="theme.css">
 <link rel="stylesheet" href="base.css">
 <link rel="stylesheet" href="components.css">
+<!-- Se houver PIN ativado, marca o app como bloqueado ANTES de a página aparecer (js/bloqueio.js cuida do resto). -->
+<script>try{if(JSON.parse(localStorage.getItem("meu-controle-lock")||"null").hash)document.documentElement.classList.add("locked")}catch(e){}</script>
 <!-- Aplica o tema salvo ANTES de a página aparecer (evita piscar). Padrão: modo claro. -->
 <script>(function(){try{var t=localStorage.getItem("meu-controle-theme");if(t!=="dark")t="light";document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#0a101d":"#14275f"}catch(e){}})()</script>
 </head>
 <body>
+<!-- TELA DE BLOQUEIO: só aparece quando o PIN está ativado e o app está bloqueado (bloqueio.js) -->
+<div id="lockScreen" class="lock-screen" role="dialog" aria-modal="true" aria-label="App bloqueado">
+  <form id="lockForm" class="lock-box" autocomplete="off">
+    <div class="lock-ico" aria-hidden="true">🔒</div>
+    <h2>Meu Controle</h2>
+    <p class="muted">Digite seu PIN para abrir.</p>
+    <input id="lockPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" aria-label="PIN" placeholder="PIN">
+    <div id="lockMsg" class="lock-msg" role="alert"></div>
+    <button class="btn primary" type="submit">Desbloquear</button>
+    <button class="linklike" type="button" id="forgotPin">Esqueci o PIN</button>
+  </form>
+</div>
 <!-- CABEÇALHO: nome do app, botão de tema (claro/escuro) e atalhos Registrar gasto / Registrar entrada. Não fica fixo: rola junto com a página. -->
 <header class="app-header">
   <div class="topbar">
@@ -29,6 +43,9 @@
     </div>
   </div>
 </header>
+
+<!-- FAIXA DO MODO DEMONSTRAÇÃO: aparece só quando os dados fictícios estão ativos (js/demo.js) -->
+<div id="demoBanner" class="demo-banner hidden" role="status"></div>
 
 <!-- CONTEÚDO PRINCIPAL: abas + uma seção (page) por aba. Só uma fica visível por vez (troca em js/ui.js > switchTab) -->
 <main class="container">
@@ -49,9 +66,11 @@
         <h1>Resumo</h1>
         <p class="muted">Entradas, saídas previstas e o que ainda depende de outras pessoas te pagarem de volta. Veja explicações completas na aba Tutorial.</p>
       </div>
-      <div class="month-nav"><button type="button" class="btn month-step" data-month-step="-1" aria-label="Mês anterior" title="Mês anterior">‹</button><input id="dashboardMonth" type="month" class="month"><button type="button" class="btn month-step" data-month-step="1" aria-label="Próximo mês" title="Próximo mês">›</button></div>
+      <div class="month-nav"><button type="button" class="btn month-step" data-month-step="-1" aria-label="Mês anterior" title="Mês anterior">‹</button><input id="dashboardMonth" type="month" class="month" aria-label="Mês visto"><button type="button" class="btn month-step" data-month-step="1" aria-label="Próximo mês" title="Próximo mês">›</button></div>
     </div>
     <div id="backupReminder" class="reminder-banner hidden"></div>
+    <!-- BOAS-VINDAS: só enquanto não há lançamentos (demo.js) -->
+    <article id="welcomeCard" class="card section hidden"></article>
 
     <!-- OS 4 CARDS DO TOPO (clicáveis: abrem a lista de lançamentos): Entradas (verde), Saídas previstas (laranja), Gasto realmente seu (vermelho) e Saldo previsto -->
   <div class="metric-grid metric-grid-4">
@@ -92,6 +111,18 @@
         </div>
       </article>
     </div>
+
+    <!-- GRÁFICOS: últimos 6 meses e distribuição das saídas do mês (desenhados em graficos.js) -->
+    <div class="grid-2 section">
+      <article class="card"><div class="card-head"><h2>📈 Últimos 6 meses</h2></div><div id="chartTrend"></div></article>
+      <article class="card"><div class="card-head"><h2>🥧 Para onde foi o dinheiro</h2></div><div id="chartDonut"></div></article>
+    </div>
+
+    <!-- ORÇAMENTO: limite mensal por categoria (definido na aba Regras, ao criar/editar a categoria) -->
+    <article class="card section">
+      <div class="card-head"><h2>🎯 Orçamento do mês</h2><span id="budgetSummary" class="muted"></span></div>
+      <div id="budgetList"></div>
+    </article>
 
     <!-- SAÍDAS PREVISTAS: pagas x não pagas -->
   <article class="card section">
@@ -141,7 +172,7 @@
 
     <!-- FILTROS da tabela: mês (com setas), busca e tipo -->
   <article class="card filters">
-      <div><label>Mês da compra / lançamento</label><div class="month-nav"><button type="button" class="btn month-step" data-month-step="-1" aria-label="Mês anterior" title="Mês anterior">‹</button><input id="txMonth" type="month" class="month"><button type="button" class="btn month-step" data-month-step="1" aria-label="Próximo mês" title="Próximo mês">›</button></div></div>
+      <div><label>Mês da compra / lançamento</label><div class="month-nav"><button type="button" class="btn month-step" data-month-step="-1" aria-label="Mês anterior" title="Mês anterior">‹</button><input id="txMonth" type="month" class="month" aria-label="Mês visto"><button type="button" class="btn month-step" data-month-step="1" aria-label="Próximo mês" title="Próximo mês">›</button></div></div>
       <div><label>Buscar</label><input id="txSearch" placeholder="Uber, Mercado, Renner..."></div>
       <div><label>Tipo</label><select id="txType"><option value="">Todos</option><option value="expense">Gastos</option><option value="income">Entradas</option><option value="card_payment">Pagamentos de cartão</option></select></div>
     </article>
@@ -165,7 +196,7 @@
 
   <!-- ===== ABA CARTÕES ===== -->
   <section id="cards" class="page hidden">
-    <div class="page-head"><div><h1>Cartões</h1><p class="muted">Fechamento, vencimento, limite e total da fatura.</p></div><div class="row-actions"><div class="month-nav"><button type="button" class="btn month-step" data-month-step="-1" aria-label="Mês anterior" title="Mês anterior">‹</button><input id="cardsMonth" type="month" class="month"><button type="button" class="btn month-step" data-month-step="1" aria-label="Próximo mês" title="Próximo mês">›</button></div><button class="btn primary" id="newCard">+ Cartão</button></div></div>
+    <div class="page-head"><div><h1>Cartões</h1><p class="muted">Fechamento, vencimento, limite e total da fatura.</p></div><div class="row-actions"><div class="month-nav"><button type="button" class="btn month-step" data-month-step="-1" aria-label="Mês anterior" title="Mês anterior">‹</button><input id="cardsMonth" type="month" class="month" aria-label="Mês visto"><button type="button" class="btn month-step" data-month-step="1" aria-label="Próximo mês" title="Próximo mês">›</button></div><button class="btn primary" id="newCard">+ Cartão</button></div></div>
     <div id="cardsGrid" class="metric-grid"></div>
   </section>
 
@@ -195,6 +226,13 @@
       </details>
     </article>
 
+    <!-- RECORRENTES: modelos que o app transforma em lançamentos todo mês (recorrentes.js) -->
+    <article class="card section">
+      <div class="card-head"><h2>🔁 Lançamentos recorrentes</h2><button class="btn primary" id="newRecurring">+ Recorrente</button></div>
+      <div class="muted" style="margin-bottom:6px">Aluguel, assinaturas, salário...: cadastre uma vez e o app cria o lançamento de todo mês.</div>
+      <div id="recurringList"></div>
+    </article>
+
     <!-- REGRAS AUTOMÁTICAS: palavra na descrição -> categoria sugerida -->
     <article class="card section">
       <div class="card-head"><h2>⚙️ Regras automáticas</h2><button class="btn primary" id="newRule">+ Regra</button></div>
@@ -219,7 +257,7 @@
           <div class="drop-icon">📄</div>
           <b>Solte o arquivo aqui</b>
           <span>ou</span>
-          <input id="fileInput" type="file">
+          <input id="fileInput" type="file" aria-label="Arquivo do extrato">
           <button class="btn" id="pickFile" type="button">Selecionar arquivo</button>
           <small id="selectedFile" class="muted">Nenhum arquivo selecionado</small>
         </div>
@@ -239,19 +277,48 @@
           <button class="btn" id="shareBackup">Compartilhar backup</button>
           <button class="btn" id="restoreBackup">Restaurar de um arquivo</button>
         </div>
-        <input id="backupInput" type="file" class="hidden-file">
+        <input id="backupInput" type="file" class="hidden-file" aria-label="Arquivo de backup">
         <div class="field-note">"Compartilhar" abre o menu de compartilhamento do aparelho (Drive, WhatsApp, Arquivos...), sem precisar depois procurar o arquivo baixado.</div>
 
         <hr>
         <h3>Copiar e colar (mais fácil entre celular e PC)</h3>
         <p class="muted">Sem precisar mexer com arquivos: copie o backup aqui e cole no outro aparelho.</p>
         <button class="btn" id="copyBackupText">Copiar backup para a área de transferência</button>
-        <textarea id="backupExportText" class="hidden-file" rows="3" readonly></textarea>
+        <textarea id="backupExportText" class="hidden-file" rows="3" readonly aria-label="Texto do backup"></textarea>
         <div style="margin-top:14px">
           <label>Colar backup para restaurar</label>
           <textarea id="backupPasteText" rows="4" placeholder="Cole aqui o texto do backup copiado no outro aparelho"></textarea>
           <div class="row-actions" style="margin-top:8px"><button class="btn primary" id="restoreFromPaste">Restaurar deste texto</button></div>
         </div>
+      </article>
+
+      <article class="card">
+        <h2>Relatórios</h2>
+        <p class="muted">Leve seus lançamentos para o Excel/Planilhas ou gere um PDF do Resumo do mês.</p>
+        <div class="row-actions">
+          <button class="btn primary" id="exportCsvMonth">Planilha do mês (CSV)</button>
+          <button class="btn" id="exportCsvAll">Todos os lançamentos (CSV)</button>
+          <button class="btn" id="printReport">Imprimir / salvar PDF do Resumo</button>
+        </div>
+        <div class="field-note">O CSV abre direto no Excel e no Google Planilhas. Na impressão, escolha "Salvar como PDF".</div>
+      </article>
+
+      <article class="card">
+        <h2>🔒 Segurança</h2>
+        <div id="lockSettings"></div>
+        <div class="field-note">O PIN impede que outra pessoa abra o app neste aparelho, mas não criptografa os dados guardados no navegador. Use também a trava de tela do celular.</div>
+      </article>
+
+      <article class="card">
+        <h2>Verificar dados</h2>
+        <p class="muted">Procura inconsistências (soma das partes diferente do valor, categoria que sumiu, cartão removido...) e corrige o que for seguro.</p>
+        <div class="row-actions"><button class="btn" id="checkData">Verificar meus dados</button></div>
+      </article>
+
+      <article class="card">
+        <h2>Modo demonstração</h2>
+        <p class="muted">Mostra o app com dados fictícios (6 meses de exemplo) para apresentar ou testar sem expor seus dados reais. Seus dados ficam guardados à parte e voltam quando você sair da demonstração.</p>
+        <div class="row-actions"><button class="btn primary" id="startDemo">Ativar modo demonstração</button><button class="btn hidden" id="exitDemo">Sair da demonstração</button></div>
       </article>
     </div>
   </section>
@@ -318,7 +385,32 @@
     <details class="card section">
       <summary><h2>Cartões e aba Regras</h2></summary>
       <p><b>Cartões</b> — cadastre fechamento, vencimento e limite. O app usa isso para calcular o próximo vencimento automaticamente.</p>
-      <p><b>Regras</b> — reúne três coisas. <b>Categorias</b>: crie, edite ou exclua; segure uma categoria e arraste para mudar a ordem (vale para o formulário e para a Planilha do mês). Editar o nome atualiza todos os lançamentos e regras que já usavam a categoria antiga. <b>Pessoas</b>: cadastre quem participa das divisões de gasto, para aparecerem no formulário e nas pendências de reembolso. <b>Regras automáticas</b>: associam uma palavra da descrição a uma categoria, para o app já sugerir a categoria certa ao digitar (ex.: "uber" → Transporte).</p>
+      <p><b>Regras</b> — reúne três coisas. <b>Categorias</b>: crie, edite ou exclua; segure uma categoria e arraste para mudar a ordem (vale para o formulário e para a Planilha do mês). Editar o nome atualiza todos os lançamentos e regras que já usavam a categoria antiga. <b>Pessoas</b>: cadastre quem participa das divisões de gasto, para aparecerem no formulário e nas pendências de reembolso. <b>Recorrentes</b>: lançamentos que se repetem todo mês. <b>Regras automáticas</b>: associam uma palavra da descrição a uma categoria, para o app já sugerir a categoria certa ao digitar (ex.: "uber" → Transporte).</p>
+    </details>
+
+    <details class="card section">
+      <summary><h2>Gráficos e orçamento (Resumo)</h2></summary>
+      <p><b>Últimos 6 meses</b> — barras de entradas (verde) e do gasto realmente seu (vermelho), com o saldo de cada mês embaixo. Toque num mês para ver aquele mês.</p>
+      <p><b>Para onde foi o dinheiro</b> — rosca com as maiores categorias do mês. Toque numa categoria da legenda para ver os lançamentos dela.</p>
+      <p><b>Orçamento do mês</b> — defina um "Limite mensal" ao criar ou editar uma categoria (aba Regras). A barra mostra quanto do limite já foi usado (só o que é seu): verde até 79%, amarelo a partir de 80% e vermelho ao estourar.</p>
+    </details>
+
+    <details class="card section">
+      <summary><h2>Lançamentos recorrentes</h2></summary>
+      <p>Na aba Regras, cadastre aluguel, assinaturas ou salário <b>uma vez</b> (valor, dia do mês, mês inicial e, se quiser, mês final). O app cria o lançamento de cada mês sozinho, até o mês seguinte ao atual.</p>
+      <p>Cada mês é criado uma única vez: se você excluir um lançamento criado, ele não volta. Mudar o valor do modelo vale para os meses ainda não criados. Use <b>Pausar</b> para suspender e <b>Excluir</b> para encerrar (os lançamentos já criados continuam).</p>
+    </details>
+
+    <details class="card section">
+      <summary><h2>Relatórios e modo demonstração (aba Importar)</h2></summary>
+      <p><b>Relatórios</b> — exporte o mês ou todos os lançamentos em CSV (abre no Excel e no Google Planilhas) ou imprima o Resumo e escolha "Salvar como PDF".</p>
+      <p><b>Modo demonstração</b> — troca temporariamente seus dados por dados fictícios de exemplo, ótimo para apresentar o app. Seus dados reais ficam guardados à parte e voltam quando você toca em "Sair da demonstração".</p>
+    </details>
+
+    <details class="card section">
+      <summary><h2>Segurança (PIN) e verificar dados</h2></summary>
+      <p><b>PIN</b> — na aba Importar, ative um PIN de 4 a 8 números. O app pede o PIN ao abrir e quando você volta depois do tempo escolhido. Não existe recuperação: se esquecer, só apagando os dados do aparelho (restaure um backup depois). O PIN barra quem pegar seu celular, mas não criptografa os dados guardados no navegador.</p>
+      <p><b>Verificar dados</b> — procura inconsistências e corrige sozinho o que é seguro (arredondamentos, categoria que faltava na lista). O que precisar de decisão sua aparece como "Precisa de você".</p>
     </details>
 
     <details class="card section">
@@ -354,6 +446,12 @@
 <script src="cadastros.js"></script>
 <script src="importer.js"></script>
 <script src="backup.js"></script>
+<script src="recorrentes.js"></script>
+<script src="graficos.js"></script>
+<script src="exportar.js"></script>
+<script src="demo.js"></script>
+<script src="bloqueio.js"></script>
+<script src="integridade.js"></script>
 <script src="main.js"></script>
 <!-- Registra o service worker (permite instalar o app no celular e abrir sem internet) -->
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>

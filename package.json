@@ -1,0 +1,10 @@
+{
+  "name": "meu-controle-financeiro",
+  "version": "1.0.0",
+  "description": "Meu Controle Financeiro — app web (PWA) local-first de controle de gastos",
+  "private": true,
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

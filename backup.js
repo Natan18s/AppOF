@@ -41,6 +41,7 @@ async function copyBackupText(){
 
 // Junta o backup recebido (arquivo, texto colado...) aos dados atuais, preenchendo o que faltar, como o loadData() já faz ao abrir o app
 async function applyBackup(x,sourceLabel){
+  if(isDemoMode()){ askAlert("Saia do modo demonstração (aba Importar) antes de restaurar um backup."); return false; }
   if(!x || typeof x!=="object" || !Array.isArray(x.transactions) || !Array.isArray(x.cards) || !Array.isArray(x.people)){
     askAlert("Esse backup não tem o formato esperado (faltam lançamentos, cartões ou pessoas)."); return false;
   }
@@ -56,6 +57,8 @@ async function applyBackup(x,sourceLabel){
   merged.importLog=x.importLog||[];
   merged.activityLog=x.activityLog||[];
   merged.lastBackupAt=x.lastBackupAt||null;
+  merged.budgets=(x.budgets&&typeof x.budgets==="object")?x.budgets:{};   // limites mensais por categoria
+  merged.recurring=Array.isArray(x.recurring)?x.recurring:[];            // modelos de lançamentos recorrentes
   data=merged;
   logActivity("restore",`Backup restaurado (${sourceLabel||"arquivo"})`,`${merged.transactions.length} lançamento(s) carregados`);
   save();

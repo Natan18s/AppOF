@@ -31,8 +31,13 @@ const defaultData = {
   ],
   importLog: [],
   activityLog: [],
-  lastBackupAt: null
+  lastBackupAt: null,
+  budgets: {},      // limite mensal por categoria: {"Lazer": 300, ...} (definido ao criar/editar a categoria)
+  recurring: []     // modelos de lançamentos recorrentes (aluguel, assinaturas, salário...)
 };
+
+// Chave onde ficam guardados, só durante o Modo demonstração, os seus dados reais (para devolvê-los ao sair da demonstração).
+const DEMO_STASH_KEY = "meu-controle-v2-real";
 
 // Todos os dados do app em memória (lançamentos, pessoas, cartões, categorias, regras, histórico).
 let data;

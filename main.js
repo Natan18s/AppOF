@@ -10,6 +10,10 @@ applyTheme(currentTheme(),false);
 // ----- Carrega os dados salvos neste aparelho -----
 data = loadData();
 
+// Cria os lançamentos recorrentes que já deveriam existir (aluguel, assinaturas...) e pede ao navegador para guardar os dados com mais cuidado.
+if(generateRecurring()){ try{ localStorage.setItem(DB_KEY,JSON.stringify(data)) }catch{} }
+requestPersistentStorage();
+
 // ----- Navegação: abas, botões que levam a outra aba e seletor de mês (com setas ‹ ›) -----
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
 document.querySelectorAll("[data-tab-link]").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tabLink)));
@@ -28,6 +32,15 @@ $("newCard").onclick=()=>openCardModal();
 $("newPerson").onclick=()=>openPersonModal();
 $("newRule").onclick=()=>openRuleModal();
 $("newCategory").onclick=()=>openCategoryModal();
+$("newRecurring").onclick=()=>openRecurringModal();
+// Aba Importar: relatórios e modo demonstração
+$("exportCsvMonth").onclick=()=>exportCsv("month");
+$("exportCsvAll").onclick=()=>exportCsv("all");
+$("printReport").onclick=printReport;
+$("startDemo").onclick=startDemo;
+$("checkData").onclick=openIntegrityModal;
+initLock();   // tela de bloqueio por PIN (se ativada)
+$("exitDemo").onclick=exitDemo;
 // Cards do topo do Resumo: clique (ou Enter/Espaço) abre a lista de lançamentos do card
 document.querySelectorAll(".metric[data-metric]").forEach(el=>{
   el.addEventListener("click",()=>showMetricDetail(el.dataset.metric));
@@ -89,6 +102,9 @@ window.addEventListener("popstate",e=>{
   const tab=(e.state&&e.state.tab)||"dashboard";
   if(tab!==currentTab) switchTab(tab,true);                                // 2º voltar: volta para a aba anterior
 });
+
+// ----- Ao voltar para o app (ex.: virou o mês com o app aberto no celular), cria os recorrentes que faltam -----
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible" && generateRecurring()) save(); });
 
 // ----- Início: desenha todas as telas -----
 // Start

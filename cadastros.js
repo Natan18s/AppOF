@@ -39,7 +39,7 @@ function applyRule(description){
 // A ordem daqui é a ordem usada nos formulários e na Planilha do mês.
 function renderCategories(){
   const box=$("categoriesList");
-  box.innerHTML=data.categories.map((c,i)=>`<div class="category-row" data-cat="${esc(c)}"><div class="category-name"><span class="cat-grip" title="Segure e arraste para mudar a ordem" aria-hidden="true">⠿</span><span class="tag">#${i+1}</span><b>${esc(c)}</b></div><div class="row-actions"><button class="btn" onclick="editCategory(${i})">Editar</button><button class="btn ghost" onclick="deleteCategory(${i})">Excluir</button></div></div>`).join("");
+  box.innerHTML=data.categories.map((c,i)=>`<div class="category-row" data-cat="${esc(c)}"><div class="category-name"><span class="cat-grip" title="Segure e arraste para mudar a ordem" aria-hidden="true">⠿</span><span class="tag">#${i+1}</span><b>${esc(c)}</b>${Number(data.budgets?.[c])>0?`<span class="tag">Limite ${fmtMoney(data.budgets[c])}/mês</span>`:""}</div><div class="row-actions"><button class="btn" onclick="editCategory(${i})">Editar</button><button class="btn ghost" onclick="deleteCategory(${i})">Excluir</button></div></div>`).join("");
   initCategoryDrag(box);   // liga o "segurar e arrastar" nas linhas
 }
 
@@ -133,13 +133,36 @@ function catEnd(commit){
 }
 
 // Painel para criar ou renomear uma categoria (renomear atualiza lançamentos e regras).
-function openCategoryModal(index=null){const old=index!==null?data.categories[index]:"";openModal(index!==null?"Editar categoria":"Nova categoria",`<form id="categoryForm"><label>Nome da categoria</label><input name="name" value="${esc(old)}" placeholder="Ex.: Assinaturas" required><div class="row-actions end" style="margin-top:15px"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary">Salvar</button></div></form>`);$("categoryForm").onsubmit=e=>{e.preventDefault();const f=new FormData(e.target),name=f.get("name").trim();if(!name)return;if(data.categories.some((c,i)=>c.toLowerCase()===name.toLowerCase()&&i!==index)){askAlert("Essa categoria já existe.");return}if(index===null)data.categories.push(name);else{const oldName=data.categories[index];data.categories[index]=name;data.rules.forEach(r=>{if(r.category===oldName)r.category=name});data.transactions.forEach(t=>(t.splits||[]).forEach(s=>{if(s.category===oldName)s.category=name}))}closeModal();save();toast("Categoria salva")}}
+function openCategoryModal(index=null){
+  const old=index!==null?data.categories[index]:"", limit=Number(data.budgets?.[old])>0?data.budgets[old]:"";
+  openModal(index!==null?"Editar categoria":"Nova categoria",`<form id="categoryForm"><label>Nome da categoria</label><input name="name" value="${esc(old)}" placeholder="Ex.: Assinaturas" required>
+    <label style="margin-top:12px">Limite mensal (opcional)</label><input name="limit" type="number" min="0" step="0.01" value="${esc(limit)}" placeholder="Ex.: 300">
+    <div class="field-note">Com um limite, o Resumo mostra quanto dele você já usou (só o seu gasto) e avisa ao passar de 80% e de 100%. Deixe vazio para não ter limite.</div>
+    <div class="row-actions end" style="margin-top:15px"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary">Salvar</button></div></form>`);
+  $("categoryForm").onsubmit=e=>{
+    e.preventDefault();
+    const f=new FormData(e.target),name=f.get("name").trim(),newLimit=Math.round((Number(f.get("limit"))||0)*100)/100;
+    if(!name)return;
+    if(data.categories.some((c,i)=>c.toLowerCase()===name.toLowerCase()&&i!==index)){askAlert("Essa categoria já existe.");return}
+    if(index===null)data.categories.push(name);
+    else{
+      const oldName=data.categories[index];
+      data.categories[index]=name;
+      data.rules.forEach(r=>{if(r.category===oldName)r.category=name});
+      (data.recurring||[]).forEach(r=>{if(r.category===oldName)r.category=name});
+      data.transactions.forEach(t=>(t.splits||[]).forEach(s=>{if(s.category===oldName)s.category=name}));
+      if(oldName!==name)delete data.budgets[oldName];   // o limite é regravado abaixo com o nome novo
+    }
+    if(newLimit>0)data.budgets[name]=newLimit;else delete data.budgets[name];
+    closeModal();save();toast("Categoria salva");
+  };
+}
 
 // Atalho para editar a categoria de posição i.
 function editCategory(i){openCategoryModal(i)}
 
 // Exclui uma categoria, se nenhum lançamento a estiver usando.
-async function deleteCategory(i){const name=data.categories[i];if(data.transactions.some(t=>(t.splits||[]).some(s=>s.category===name))){askAlert("Essa categoria está sendo usada em lançamentos. Edite os lançamentos ou mova-os para outra categoria antes de excluir.");return}if(await askConfirm(`Excluir a categoria "${name}"?`,{title:"Excluir categoria",okText:"Excluir",danger:true})){data.categories.splice(i,1);save();toast("Categoria excluída")}}
+async function deleteCategory(i){const name=data.categories[i];if(data.transactions.some(t=>(t.splits||[]).some(s=>s.category===name))||(data.recurring||[]).some(r=>r.category===name)){askAlert("Essa categoria está sendo usada em lançamentos ou em recorrentes. Edite-os ou mova-os para outra categoria antes de excluir.");return}if(await askConfirm(`Excluir a categoria "${name}"?`,{title:"Excluir categoria",okText:"Excluir",danger:true})){data.categories.splice(i,1);delete data.budgets[name];save();toast("Categoria excluída")}}
 
 // Painel para criar ou editar um cartão.
 function openCardModal(id=null){

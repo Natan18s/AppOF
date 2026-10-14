@@ -77,3 +77,44 @@ function nextMonthPaymentDate(cardId,baseDate){
   const day=Math.min(Number(card?.due)||d.getDate(), new Date(y,m+1,0).getDate());
   return localISO(new Date(y,m,day));
 }
+
+// ====================================================================
+// Séries, categorias e orçamentos (usados pelos gráficos do Resumo)
+// ====================================================================
+
+// Resumo dos últimos n meses terminando em endMonth (AAAA-MM): entradas, saídas, seu gasto e saldo de cada mês.
+function monthlySeries(endMonth,n=6){
+  const out=[];
+  for(let i=n-1;i>=0;i--){
+    const m=shiftMonthStr(endMonth,-i);
+    const sched=scheduledPaymentsForMonth(m);
+    const income=incomeBreakdownForMonth(m).total;
+    const own=sched.reduce((s,t)=>s+ownAmount(t),0);
+    const gross=sched.reduce((s,t)=>s+(Number(t.value)||0),0);
+    out.push({month:m,income,own,gross,balance:income-own});
+  }
+  return out;
+}
+
+// Quanto foi gasto em cada categoria no mês (todas as partes, de qualquer pessoa), do maior para o menor: [{category,value}].
+function categoryTotals(m){
+  const cat={};
+  scheduledPaymentsForMonth(m).forEach(t=>(t.splits||[]).forEach(s=>{cat[s.category]=(cat[s.category]||0)+Number(s.amount||0)}));
+  return Object.entries(cat).map(([category,value])=>({category,value})).sort((a,b)=>b.value-a.value);
+}
+
+// Quanto do gasto de cada categoria é realmente seu (só as partes "Você") no mês: {categoria: valor}.
+function ownByCategory(m){
+  const cat={};
+  scheduledPaymentsForMonth(m).forEach(t=>(t.splits||[]).forEach(s=>{if(s.ownerId==="self")cat[s.category]=(cat[s.category]||0)+Number(s.amount||0)}));
+  return cat;
+}
+
+// Situação dos orçamentos do mês: para cada categoria com limite, quanto já gastou e se está ok (<80%), em atenção (80% a 99%) ou estourado (100% ou mais).
+function budgetStatus(m){
+  const budgets=data.budgets||{}, own=ownByCategory(m);
+  return Object.keys(budgets).filter(c=>Number(budgets[c])>0).map(category=>{
+    const limit=Number(budgets[category]), spent=own[category]||0, pct=spent/limit*100;
+    return {category,limit,spent,pct,level:pct>=100?"over":pct>=80?"warn":"ok"};
+  }).sort((a,b)=>b.pct-a.pct);
+}

@@ -161,16 +161,16 @@ function transactionForm(t=null,type="expense"){
 
 // HTML da coluna "Status" de uma linha da divisão: "Não gera reembolso" para Você, ou A receber / Já recebi para outra pessoa.
 function splitStatusCell(ownerId,reimbursed){
-  return `<div class="fld-head"><label>Status</label></div>${ownerId==="self"?`<div class="field-note">Não gera reembolso</div>`:`<select class="split-status"><option value="pending" ${reimbursed!==true?"selected":""}>A receber</option><option value="received" ${reimbursed===true?"selected":""}>Já recebi</option></select>`}`;
+  return `<div class="fld-head"><label>Status</label></div>${ownerId==="self"?`<div class="field-note">Não gera reembolso</div>`:`<select class="split-status" aria-label="Status do reembolso"><option value="pending" ${reimbursed!==true?"selected":""}>A receber</option><option value="received" ${reimbursed===true?"selected":""}>Já recebi</option></select>`}`;
 }
 
 // HTML de uma linha da divisão do gasto (categoria, valor, quem paga e status).
 // Todo campo tem um cabeçalho (.fld-head) de mesma altura; Categoria e Quem paga? ganham o atalho de criar na hora (.mini-create ocupa o lugar do select).
 function splitRow(s,i,categories,people){
   return `<div class="split" data-index="${i}">
-    <div class="category"><div class="fld-head"><label>Categoria</label><button type="button" class="mini-link new-cat">+ Criar categoria</button></div><div class="mini-create hidden"><input class="mini-input" type="text" maxlength="40" placeholder="Nome da categoria"><button type="button" class="btn primary mini-ok" title="Salvar">✓</button><button type="button" class="btn mini-cancel" title="Cancelar">✕</button></div><select class="split-category">${categories.map(c=>`<option ${c===s.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
-    <div><div class="fld-head"><label>Valor</label></div><input class="split-amount" type="number" min="0" step="0.01" value="${Number(s.amount||0)}"></div>
-    <div class="owner"><div class="fld-head"><label>Quem paga?</label><button type="button" class="mini-link new-person">+ Criar pessoa</button></div><div class="mini-create hidden"><input class="mini-input" type="text" maxlength="40" placeholder="Nome da pessoa"><button type="button" class="btn primary mini-ok" title="Salvar">✓</button><button type="button" class="btn mini-cancel" title="Cancelar">✕</button></div><select class="split-owner">${people.map(p=>`<option value="${p.id}" ${s.ownerId===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select></div>
+    <div class="category"><div class="fld-head"><label>Categoria</label><button type="button" class="mini-link new-cat">+ Criar categoria</button></div><div class="mini-create hidden"><input class="mini-input" type="text" maxlength="40" placeholder="Nome da categoria" aria-label="Nome da nova categoria"><button type="button" class="btn primary mini-ok" title="Salvar">✓</button><button type="button" class="btn mini-cancel" title="Cancelar">✕</button></div><select class="split-category" aria-label="Categoria">${categories.map(c=>`<option ${c===s.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+    <div><div class="fld-head"><label>Valor</label></div><input class="split-amount" aria-label="Valor desta parte" type="number" min="0" step="0.01" value="${Number(s.amount||0)}"></div>
+    <div class="owner"><div class="fld-head"><label>Quem paga?</label><button type="button" class="mini-link new-person">+ Criar pessoa</button></div><div class="mini-create hidden"><input class="mini-input" type="text" maxlength="40" placeholder="Nome da pessoa" aria-label="Nome da nova pessoa"><button type="button" class="btn primary mini-ok" title="Salvar">✓</button><button type="button" class="btn mini-cancel" title="Cancelar">✕</button></div><select class="split-owner" aria-label="Quem paga">${people.map(p=>`<option value="${p.id}" ${s.ownerId===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select></div>
     <div class="person">${splitStatusCell(s.ownerId,s.reimbursed)}</div>
     <button type="button" class="btn ghost remove-split" title="Remover">✕</button>
   </div>`;

@@ -1,6 +1,6 @@
 // Service worker: guarda os arquivos do app no aparelho para abrir rápido e funcionar sem internet.
 // Sempre que mudar QUALQUER arquivo do app, aumente o número da versão abaixo (v6 -> v7...) para o celular baixar a versão nova.
-const CACHE="meu-controle-v15";
+const CACHE="meu-controle-v18";
 // Lista de arquivos guardados. Se criar um arquivo novo (.css ou .js), inclua-o aqui.
 const FILES=[
   "./",
@@ -23,6 +23,12 @@ const FILES=[
   "./cadastros.js",
   "./importer.js",
   "./backup.js",
+  "./recorrentes.js",
+  "./graficos.js",
+  "./exportar.js",
+  "./demo.js",
+  "./bloqueio.js",
+  "./integridade.js",
   "./main.js"
 ];
 // Instalação: baixa e guarda todos os arquivos da lista

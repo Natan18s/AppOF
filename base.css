@@ -93,3 +93,22 @@ tbody tr:hover{background:var(--soft)}
 
 /* Detalhe "Como o reembolso funciona" dentro do card Pessoas (aba Regras) */
 .help-details{margin-top:12px}.help-details summary{cursor:pointer;font-weight:600;color:var(--muted-strong);padding:6px 0}
+
+/* Respeita quem prefere menos movimento (celulares com "reduzir animações" ligado) */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+
+/* ===== Tela de bloqueio por PIN (bloqueio.js) ===== */
+.lock-screen{display:none;position:fixed;inset:0;z-index:80;background:var(--bg);align-items:center;justify-content:center;padding:20px}
+html.locked .lock-screen{display:flex}
+html.locked,html.locked body{overflow:hidden}
+html.locked body>*:not(.lock-screen):not(.confirm-overlay):not(script){visibility:hidden}
+html.locked .confirm-overlay{z-index:90}
+.lock-box{width:min(340px,100%);display:grid;gap:12px;text-align:center}
+.lock-box h2{margin:0}.lock-ico{font-size:44px;line-height:1}
+.lock-box input{text-align:center;font-size:24px;letter-spacing:.35em;height:52px}
+.lock-msg{min-height:20px;color:var(--red);font-size:13px}
+.lock-box .btn{width:100%;padding:13px}
+.linklike{border:0;background:transparent;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;font-family:inherit}
+.integrity-list{display:grid;gap:8px;max-height:50vh;overflow:auto}
+.integrity-item{padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-size:13px}
+.integrity-item.fix{border-left:4px solid var(--green)}.integrity-item.warn{border-left:4px solid var(--amber)}

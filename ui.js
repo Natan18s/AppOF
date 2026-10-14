@@ -41,7 +41,7 @@ function switchTab(tab,fromHistory){
 function setMonth(m){ if(!m)return; month=m; ["dashboardMonth","txMonth","cardsMonth"].forEach(id=>{$(id).value=m}); renderAll(); }
 
 // Redesenha todas as abas. Chamada por save() depois de qualquer mudança.
-function renderAll(){ renderDashboard(); renderTransactions(); renderCards(); renderPeople(); renderCategories(); renderRules(); renderImportCardOptions(); }
+function renderAll(){ renderDashboard(); renderCharts(); renderTransactions(); renderCards(); renderPeople(); renderCategories(); renderRecurring(); renderRules(); renderImportCardOptions(); renderDemoBanner(); renderWelcome(); }
 
 // Vai para a aba Lançamentos e destaca a linha do lançamento
 function goToTransaction(id){

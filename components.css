@@ -44,7 +44,8 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .mini-link{border:0;background:transparent;color:var(--btn);font-weight:700;font-size:11.5px;padding:3px 0 3px 6px;cursor:pointer;white-space:nowrap}
 .mini-link:hover{text-decoration:underline}
 /* "Criar na hora": ocupa o lugar do campo (mesma altura do select), então nada muda de tamanho */
-.mini-create{display:flex;gap:4px;height:42px}
+.split select,.split input.split-amount{height:44px;box-sizing:border-box}   /* todos os campos da linha com a mesma altura */
+.mini-create{display:flex;gap:4px;height:44px}
 .mini-create .mini-input{flex:1;width:auto;min-width:0;height:100%}
 .mini-create .btn{width:38px;height:100%;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}.split-total{display:flex;justify-content:space-between;padding:9px 0;font-weight:700}
 .reimbursed-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px;border:1px solid var(--line);border-radius:10px;margin:7px 0}
@@ -161,7 +162,7 @@ tr.sheet-dragging td{opacity:.35}
   .mini-create{height:50px}.mini-create .mini-input{font-size:17px}.mini-create .btn{width:46px}
   .fld-head{min-height:24px}
   .split .remove-split{grid-column:2;height:44px;min-width:44px}
-  .split input,.split select{width:100%;min-width:0;max-width:100%;height:50px;font-size:17px;padding:0 12px}   /* campos altos e fáceis de tocar (17px também evita o zoom automático do iPhone) */
+  .split input,.split select,.split input.split-amount{width:100%;min-width:0;max-width:100%;height:50px;font-size:17px;padding:0 12px}   /* campos altos e fáceis de tocar (17px também evita o zoom automático do iPhone) */
   .split .split-amount{font-size:20px;font-weight:600}   /* Valor em destaque */
   .split-header{flex-direction:column;align-items:stretch}
   .loan-grid{grid-template-columns:1fr}
@@ -221,3 +222,51 @@ tr.sheet-dragging td{opacity:.35}
 .confirm-actions .btn.danger:hover{filter:brightness(1.1)}
 @keyframes confirm-in{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
 @media(max-width:700px){.confirm-actions .btn{flex:1}}
+
+/* ===== Gráficos do Resumo (graficos.js) ===== */
+.chart-svg{width:100%;height:auto;display:block}
+.chart-svg text{fill:var(--muted);font-size:10.5px;font-family:inherit}
+.chart-svg .c-grid{stroke:var(--line);stroke-width:1}
+.chart-svg .c-inc{fill:var(--green)}.chart-svg .c-own{fill:var(--red)}
+.chart-svg .c-hit{fill:transparent}.chart-svg .c-hit.sel{fill:var(--soft)}
+.chart-svg .c-month{cursor:pointer;outline:none}
+.chart-svg .c-month:hover .c-hit,.chart-svg .c-month:focus-visible .c-hit{fill:var(--hover)}
+.chart-svg text.c-sel{fill:var(--text);font-weight:700}
+.chart-svg text.c-pos{fill:var(--green)}.chart-svg text.c-neg{fill:var(--red)}
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;margin-top:8px;align-items:center}
+.chart-note{font-size:11.5px;color:var(--muted);margin-top:4px}
+.chart-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.donut-wrap{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+.chart-svg.donut{width:190px;flex:none}
+.chart-svg.donut .c-ring{stroke:var(--chip)}
+.chart-svg.donut .c-center{fill:var(--text);font-size:17px;font-weight:700}
+.donut-legend{flex:1;min-width:170px;display:grid;gap:2px}
+.legend-item{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;color:var(--text);padding:7px 8px;border-radius:8px;font-size:13px;cursor:pointer;text-align:left;font-family:inherit}
+.legend-item:hover:not(:disabled){background:var(--hover)}
+.legend-item i{width:10px;height:10px;border-radius:3px;flex:none}
+.legend-item span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legend-item:disabled{cursor:default}
+.budget-tag.over{background:var(--own-bg);color:var(--red);font-weight:700}
+.budget-tag.warn{background:var(--warn-bg);color:var(--warn-fg);font-weight:700}
+
+/* ===== Recorrentes ===== */
+.recur-row{align-items:flex-start}
+.recur-row .row-actions{flex-wrap:wrap;justify-content:flex-end}
+.recur-paused{opacity:.6}
+
+/* ===== Faixa do Modo demonstração ===== */
+.demo-banner{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:9px 16px;background:var(--warn-bg);color:var(--warn-fg);border-bottom:1px solid var(--warn-line);font-size:13px;text-align:center}
+.demo-banner .btn{padding:5px 11px;font-size:12px}
+
+/* ===== Impressão / PDF do Resumo: fundo claro, sem botões, abas nem avisos ===== */
+@media print{
+  :root,:root[data-theme="dark"]{color-scheme:light;--bg:#fff;--surface:#fff;--soft:#f6f8fc;--line:#e4e9f2;--text:#0f172a;--muted:#64748b;--muted-strong:#475569;--green:#15803d;--red:#dc2626;--amber:#b45309;--chip:#eef1f7;--hover:#fff;--shadow:none}
+  body{background:#fff}
+  .app-header,.tabs,.demo-banner,.toast,.confirm-overlay,#modal,.reminder-banner,.btn,.bulkbar{display:none!important}
+  .page:not(#dashboard){display:none!important}
+  #dashboard{display:block!important}
+  .card,.metric{box-shadow:none!important;break-inside:avoid}
+  .bar-click{transform:none!important}
+}
+.card-head .btn{white-space:nowrap}
+@media(max-width:700px){.recur-row{flex-direction:column;align-items:stretch}.recur-row .row-actions{justify-content:flex-start}}
