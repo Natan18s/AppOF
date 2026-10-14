@@ -87,14 +87,14 @@ function openBulkPaymentModal(){
   if(!expenses.length){askAlert("Selecione pelo menos um gasto. A data de pagamento previsto só vale para gastos.");return}
   const suggested=expenses.length===1?(expenses[0].paymentDate||nextCardPaymentDate(expenses[0].cardId,expenses[0].date)):(month+"-19");
   openModal("Definir pagamento previsto",`<form id="bulkPayForm"><p>Você selecionou <b>${expenses.length}</b> gasto(s). A data abaixo será aplicada a todos.${ids.length>expenses.length?" As entradas selecionadas serão ignoradas.":""}</p><div><label>Data de pagamento</label><input name="paymentDate" type="date" value="${suggested}" required></div><div style="margin-top:10px"><label>Status</label><select name="status"><option value="planned">Pagamento previsto</option><option value="paid">Já pago</option></select></div><div class="row-actions end" style="margin-top:15px"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary">Aplicar aos selecionados</button></div></form>`);
-  $("bulkPayForm").onsubmit=e=>{e.preventDefault();const f=new FormData(e.target);expenses.forEach(t=>{t.paymentDate=f.get("paymentDate");t.paymentStatus=f.get("status")});logActivity("bulk",`Pagamento previsto definido em ${expenses.length} gasto(s)`,`Data ${fmtDate(f.get("paymentDate"))} · ${f.get("status")==="paid"?"já pago":"previsto"} · ${expenses.slice(0,3).map(t=>t.description).join(", ")}${expenses.length>3?"…":""}`);selectedTxIds.clear();closeModal();save();toast(`Pagamento previsto aplicado a ${expenses.length} gasto(s)`) };
+  $("bulkPayForm").onsubmit=e=>{e.preventDefault();const f=new FormData(e.target),changes=expenses.map(t=>{const before=structuredClone(t);t.paymentDate=f.get("paymentDate");t.paymentStatus=f.get("status");return{before,after:structuredClone(t)}});logActivity("bulk",`Pagamento previsto definido em ${expenses.length} gasto(s)`,`Data ${fmtDate(f.get("paymentDate"))} · ${f.get("status")==="paid"?"já pago":"previsto"} · ${expenses.slice(0,3).map(t=>t.description).join(", ")}${expenses.length>3?"…":""}`,"",{changes});selectedTxIds.clear();closeModal();save();toast(`Pagamento previsto aplicado a ${expenses.length} gasto(s)`) };
 }
 
 // Remove a previsão de pagamento dos gastos selecionados (volta para a data da compra, como pago).
 function clearBulkPaymentDate(){
   const expenses=[...selectedTxIds].map(id=>data.transactions.find(t=>t.id===id)).filter(t=>t?.type==="expense");
   if(!expenses.length){toast("Selecione pelo menos um gasto.");return}
-  expenses.forEach(t=>{t.paymentDate=t.date;t.paymentStatus="paid"});logActivity("bulk",`Previsão de pagamento removida de ${expenses.length} gasto(s)`,expenses.slice(0,3).map(t=>t.description).join(", ")+(expenses.length>3?"…":""));selectedTxIds.clear();save();toast("Previsão de pagamento removida");
+  const changes=expenses.map(t=>{const before=structuredClone(t);t.paymentDate=t.date;t.paymentStatus="paid";return{before,after:structuredClone(t)}});logActivity("bulk",`Previsão de pagamento removida de ${expenses.length} gasto(s)`,expenses.slice(0,3).map(t=>t.description).join(", ")+(expenses.length>3?"…":""),"",{changes});selectedTxIds.clear();save();toast("Previsão de pagamento removida");
 }
 
 // Exclui de uma vez todos os lançamentos selecionados, com confirmação e opção de desfazer.
@@ -104,7 +104,7 @@ async function bulkDelete(){
   if(!(await askConfirm(`Excluir ${items.length} lançamento(s) selecionado(s)? Logo depois você poderá desfazer.`,{title:"Excluir lançamentos",okText:"Excluir",danger:true})))return;
   const ids=new Set(items.map(t=>t.id));
   data.transactions=data.transactions.filter(t=>!ids.has(t.id));
-  logActivity("delete",`${items.length} lançamento(s) excluído(s) de uma vez`,items.slice(0,3).map(t=>t.description).join(", ")+(items.length>3?"…":""));
+  logActivity("delete",`${items.length} lançamento(s) excluído(s) de uma vez`,items.slice(0,3).map(t=>t.description).join(", ")+(items.length>3?"…":""),"",{changes:items.map(t=>({before:structuredClone(t),after:null}))});
   lastDeleted=items;
   selectedTxIds.clear();
   save();
@@ -158,7 +158,7 @@ function transactionForm(t=null,type="expense"){
       <label class="recurring-card" for="txRecurring"><input type="checkbox" id="txRecurring" name="recurring"><span><b>Repetir esta ${isExpense?"despesa":"entrada"} mensalmente</b><small>Cria um lançamento por mês durante o período escolhido.</small></span></label>
       <div class="form-grid recurring-dates hidden" id="recurringDates">
         <div><label>De</label><input name="recurringStartDate" id="recurringStartDate" type="date" value="${t?.date||defaultEntryDate()}"></div>
-        <div><label>Até (opcional)</label><input name="recurringEndDate" id="recurringEndDate" type="date"><div class="field-note">Deixe vazio para manter a recorrência sem data final.</div></div>
+        <div><label>Até (opcional)</label><input name="recurringEndDate" id="recurringEndDate" type="date"><div class="field-note">Deixe vazio para manter a recorrência em até 6 meses.</div></div>
       </div>
     </div>`:""}
     ${isExpense?`<div class="split-header"><div><b>Divisão do gasto por pessoa</b><div class="field-note">Por padrão o valor total fica com Você. Ao adicionar pessoas, o valor é dividido igualmente entre elas (dá para ajustar depois).</div></div><div class="split-actions"><button type="button" class="btn equal-btn" id="splitEqual">Dividir igualmente</button><button type="button" class="btn" id="addSplit">Adicionar pessoas</button></div></div><div id="splitList">${splits.map((s,i)=>splitRow(s,i,data.categories,data.people)).join("")}</div><div class="split-total"><span>Total dividido</span><span id="splitSum">${fmtMoney(splits.reduce((a,x)=>a+Number(x.amount||0),0))}</span></div><div class="field-note" id="splitHint"></div>`:""}
@@ -389,8 +389,9 @@ function saveExpenseFromForm(existingId){
   const base={date,description:f.get("description"),value,method,cardId:credit?f.get("cardId"):"",paymentDate:credit?(f.get("paymentDate")||date):date,paymentStatus:f.get("paymentStatus")||(credit?"planned":"paid"),type:"expense",splits};   // sem "notes": o formulário não tem mais Observação (a antiga é preservada na edição)
   if(existingId){
     const old=data.transactions.find(t=>t.id===existingId);
-    data.transactions=data.transactions.map(t=>t.id===existingId?{...old,...base}:t);
-    logActivity("edit",`Gasto editado: ${base.description}`,`${fmtMoney(base.value)} · ${expenseDestination({...old,...base})}`,existingId);
+    const updated={...old,...base};
+    data.transactions=data.transactions.map(t=>t.id===existingId?updated:t);
+    logActivity("edit",`Gasto editado: ${base.description}`,`${fmtMoney(base.value)} · ${expenseDestination(updated)}`,existingId,{changes:[{before:structuredClone(old),after:structuredClone(updated)}]});
     toast("Gasto atualizado");
   }else if(wantsRecurring){
     const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
@@ -402,17 +403,19 @@ function saveExpenseFromForm(existingId){
     toast(count?`Recorrência salva · ${count} lançamento(s) criado(s)`:"Recorrência salva");
   }else if(method==="installment"){
     const rem=n-start+1,totalCents=Math.round(value*100),per=Math.floor(totalCents/n),first=f.get("firstMonth")||date.slice(0,7),day=date.slice(8,10),pay=base.paymentDate;
+    const created=[];
     for(let i=0;i<rem;i++){
       const k=start+i,cents=k===n?totalCents-per*(n-1):per;
-      data.transactions.push({...base,id:uid(),createdAt:Date.now()+i,value:cents/100,splits:scaleSplits(splits,cents/100,value),date:shiftMonthDate(first,day,i),paymentDate:shiftMonthDate(pay.slice(0,7),pay.slice(8,10),i),paymentStatus:i===0?base.paymentStatus:"planned",installments:n,installmentNo:k});
+      const installment={...base,id:uid(),createdAt:Date.now()+i,value:cents/100,splits:scaleSplits(splits,cents/100,value),date:shiftMonthDate(first,day,i),paymentDate:shiftMonthDate(pay.slice(0,7),pay.slice(8,10),i),paymentStatus:i===0?base.paymentStatus:"planned",installments:n,installmentNo:k};
+      created.push(installment);data.transactions.push(installment);
     }
-    const firstTx=data.transactions[data.transactions.length-rem];
-    logActivity("create",`Gasto parcelado: ${base.description}`,`${n}x · lançadas ${rem} (${start}/${n} a ${n}/${n}) · total ${fmtMoney(value)} · ${expenseDestination(firstTx)}`,firstTx.id);
+    const firstTx=created[0];
+    logActivity("create",`Gasto parcelado: ${base.description}`,`${n}x · lançadas ${rem} (${start}/${n} a ${n}/${n}) · total ${fmtMoney(value)} · ${expenseDestination(firstTx)}`,firstTx.id,{changes:created.map(t=>({before:null,after:structuredClone(t)}))});
     toast(`${rem} parcela(s) lançada(s)`);
   }else{
     const nt={...base,id:uid(),createdAt:Date.now(),installments:1,installmentNo:1};
     data.transactions.push(nt);
-    logActivity("create",`Novo gasto: ${base.description}`,`${fmtMoney(value)} · ${expenseDestination(nt)}`,nt.id);
+    logActivity("create",`Novo gasto: ${base.description}`,`${fmtMoney(value)} · ${expenseDestination(nt)}`,nt.id,{changes:[{before:null,after:structuredClone(nt)}]});
     toast("Gasto salvo");
   }
   closeModal();save();
@@ -433,8 +436,9 @@ function saveIncomeFromForm(existingId){
   const where=`${base.source==="reimbursement"?"Reembolso recebido":"Entrada normal"} · entra em ${fmtDate(base.date)} (${fmtMonthLabel(base.date)})`;
   if(existingId){
     const old=data.transactions.find(t=>t.id===existingId);
-    data.transactions=data.transactions.map(t=>t.id===existingId?{...old,...base}:t);
-    logActivity("edit",`Entrada editada: ${base.description}`,`${fmtMoney(value)} · ${where}`,existingId);
+    const updated={...old,...base};
+    data.transactions=data.transactions.map(t=>t.id===existingId?updated:t);
+    logActivity("edit",`Entrada editada: ${base.description}`,`${fmtMoney(value)} · ${where}`,existingId,{changes:[{before:structuredClone(old),after:structuredClone(updated)}]});
     toast("Entrada atualizada");
   }else if(wantsRecurring){
     const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
@@ -447,7 +451,7 @@ function saveIncomeFromForm(existingId){
   }else{
     const nt={...base,id:uid(),createdAt:Date.now()};
     data.transactions.push(nt);
-    logActivity("create",`Nova entrada: ${base.description}`,`${fmtMoney(value)} · ${where}`,nt.id);
+    logActivity("create",`Nova entrada: ${base.description}`,`${fmtMoney(value)} · ${where}`,nt.id,{changes:[{before:null,after:structuredClone(nt)}]});
     toast("Entrada registrada");
   }
   closeModal();save();
@@ -466,7 +470,7 @@ async function removeTransaction(id){
   const t=data.transactions.find(x=>x.id===id); if(!t)return;
   if(!(await askConfirm(`"${t.description}" · ${fmtMoney(t.value)}. Logo depois você poderá desfazer.`,{title:"Excluir este lançamento?",okText:"Excluir",danger:true})))return;
   data.transactions=data.transactions.filter(x=>x.id!==id);
-  logActivity("delete",`Excluído: ${t.description}`,`${t.type==="income"?"Entrada":t.type==="expense"?"Gasto":"Pagamento de cartão"} de ${fmtMoney(t.value)} · data ${fmtDate(t.date)}`);
+  logActivity("delete",`Excluído: ${t.description}`,`${t.type==="income"?"Entrada":t.type==="expense"?"Gasto":"Pagamento de cartão"} de ${fmtMoney(t.value)} · data ${fmtDate(t.date)}`,id,{changes:[{before:structuredClone(t),after:null}]});
   lastDeleted=[t];
   save();
   showToast("Lançamento excluído","Desfazer",undoDelete);
@@ -488,11 +492,12 @@ function markReimbursement(txId,splitIndex){
   const t=data.transactions.find(x=>x.id===txId);if(!t)return;
   const s=t.splits?.[splitIndex];if(!s||s.ownerId==="self")return;
   if(s.reimbursed)return;
+  const beforeExpense=structuredClone(t);
   s.reimbursed=true;
   const p=data.people.find(x=>x.id===s.ownerId);
   const isLoan=s.category===LOAN_CATEGORY;
   const inc={id:uid(),createdAt:Date.now(),date:today(),description:`${isLoan?"Empréstimo devolvido":"Reembolso"}: ${t.description}`,value:Number(s.amount),type:"income",source:"reimbursement",sourceCategory:s.category,notes:`Recebido de ${p?.name||"outra pessoa"}`,linkedTransactionId:txId,linkedSplitId:s.id};
   data.transactions.push(inc);
-  logActivity("received",`${isLoan?"Empréstimo devolvido":"Reembolso recebido"} de ${p?.name||"outra pessoa"}: ${fmtMoney(s.amount)}`,`Referente a "${t.description}" (${s.category}) · entrou como entrada em ${fmtDate(inc.date)}`,inc.id);
+  logActivity("received",`${isLoan?"Empréstimo devolvido":"Reembolso recebido"} de ${p?.name||"outra pessoa"}: ${fmtMoney(s.amount)}`,`Referente a "${t.description}" (${s.category}) · entrou como entrada em ${fmtDate(inc.date)}`,inc.id,{changes:[{before:beforeExpense,after:structuredClone(t)},{before:null,after:structuredClone(inc)}]});
   save();toast("Reembolso registrado");
 }

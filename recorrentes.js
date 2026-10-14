@@ -1,17 +1,17 @@
 // ====================================================================
 // recorrentes.js — lançamentos recorrentes (aluguel, assinaturas, salário...)
 // Você cadastra o modelo uma vez (aba Regras) e o app cria o lançamento de cada mês sozinho,
-// do mês inicial até o mês seguinte ao atual. Cada mês é gerado uma única vez: se você excluir um
+// do mês inicial até seis meses à frente. Cada mês é gerado uma única vez: se você excluir um
 // lançamento gerado, ele NÃO volta. Mudar o modelo vale para os meses que ainda não foram gerados.
 // ====================================================================
 
-// Até quantos meses à frente do mês atual o app já deixa os lançamentos criados (1 = mês seguinte, bom para planejar).
-const RECURRING_HORIZON = 1;
+// Até quantos meses à frente do mês atual o app já deixa os lançamentos criados.
+const RECURRING_HORIZON = 6;
 
 // Meses (AAAA-MM) do modelo r que ainda precisam ser gerados, do mês inicial até upTo (ou até o mês final, se houver).
 function recurringMonths(r,upTo){
   if(!r.active) return [];
-  const end = (r.endMonth && r.endMonth<upTo) ? r.endMonth : upTo;
+  const end = r.endMonth || upTo;
   const done = r.generated||[];
   const out=[]; let m=r.startMonth, guard=0;
   while(m<=end && guard++<600){ if(!done.includes(m)) out.push(m); m=shiftMonthStr(m,1); }
@@ -36,7 +36,7 @@ function buildRecurringTransaction(r,m,now=today()){
 // Cria os lançamentos que faltam de todos os modelos ativos. Devolve quantos criou (quem chama decide se precisa salvar).
 function generateRecurring(now=today()){
   const upTo=shiftMonthStr(now.slice(0,7),RECURRING_HORIZON);
-  let count=0, first=null;
+  let count=0, first=null; const changes=[];
   (data.recurring||[]).forEach(r=>{
     recurringMonths(r,upTo).forEach(m=>{
       const t=buildRecurringTransaction(r,m,now);
@@ -45,10 +45,11 @@ function generateRecurring(now=today()){
       t.createdAt+=count;   // mantém a ordem de criação
       data.transactions.push(t);
       (r.generated=r.generated||[]).push(m);
+      changes.push({before:null,after:structuredClone(t)});
       count++; first=first||t;
     });
   });
-  if(count) logActivity("create",`Recorrentes: ${count} lançamento(s) criado(s) automaticamente`,first?first.description+(count>1?" e outros":""):"",first?first.id:"");
+  if(count) logActivity("create",`Recorrentes: ${count} lançamento(s) criado(s) automaticamente`,first?first.description+(count>1?" e outros":""):"",first?first.id:"",{changes});
   return count;
 }
 
@@ -84,7 +85,7 @@ function openRecurringModal(id=null){
     <div class="rec-exp"><label>Categoria</label><select name="category">${data.categories.map(c=>`<option ${c===r.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
     <div class="rec-exp"><label>Forma de pagamento</label><select name="method" id="recMethod">${methods.map(([k,v])=>`<option value="${k}" ${k===r.method?"selected":""}>${v}</option>`).join("")}</select></div>
     <div class="rec-card"><label>Cartão</label><select name="cardId">${data.cards.map(c=>`<option value="${esc(c.id)}" ${c.id===r.cardId?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
-    <div class="full field-note">O app cria o lançamento de cada mês sozinho, até o mês seguinte. Se você excluir um já criado, ele não volta. Mudanças valem para os meses ainda não criados.</div>
+    <div class="full field-note">O app cria o lançamento de cada mês sozinho, até seis meses à frente. Se você excluir um já criado, ele não volta. Mudanças valem para os meses ainda não criados.</div>
     <div class="full row-actions end"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary">Salvar</button></div>
   </form>`);
   const sync=()=>{

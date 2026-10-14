@@ -62,22 +62,24 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape" && !$("modal").class
 // ----- Aba Importar: arquivo, arrastar e soltar, confirmar -----
 $("confirmImport").onclick=()=>{
   if(!pendingImport.length){toast("Nada novo para importar.");return}
+  const imported=[];
+  const addImported=t=>{const transaction=normalizeTransaction(t);data.transactions.push(transaction);imported.push({before:null,after:structuredClone(transaction)})};
   pendingImport.forEach(r=>{
     if(r.isCardPayment){
-      data.transactions.push({id:uid(),date:r.date,description:r.description,value:r.value,type:"card_payment",cardId:r.cardId,importKey:r.sourceKey});
+      addImported({id:uid(),date:r.date,description:r.description,value:r.value,type:"card_payment",cardId:r.cardId,importKey:r.sourceKey});
     }else if(r.isExpense){
-      data.transactions.push({
+      addImported({
         id:uid(),date:r.date,description:r.description,value:r.value,type:"expense",cardId:r.cardId,
         paymentDate:r.paymentDate||r.date,paymentStatus:r.paymentStatus||"paid",
         splits:[{id:uid(),category:r.category||"Outros",amount:r.value,ownerId:"self",reimbursed:false}],
         installments:r.installments||1,installmentNo:r.installmentNo||1,importKey:r.sourceKey
       });
     }else{
-      data.transactions.push({id:uid(),date:r.date,description:r.description,value:r.value,type:"income",source:"imported-credit",notes:"Crédito importado",importKey:r.sourceKey});
+      addImported({id:uid(),date:r.date,description:r.description,value:r.value,type:"income",source:"imported-credit",notes:"Crédito importado",importKey:r.sourceKey});
     }
   });
   data.importLog.push({id:uid(),file:selectedImport?.name||"",date:new Date().toISOString(),count:pendingImport.length});
-  logActivity("import",`Importação: ${selectedImport?.name||"arquivo"}`,`${pendingImport.length} lançamento(s) novos importados`);
+  logActivity("import",`Importação: ${selectedImport?.name||"arquivo"}`,`${pendingImport.length} lançamento(s) novos importados`,"",{changes:imported});
   pendingImport=[];selectedImport=null;$("importPreview").classList.add("hidden");$("selectedFile").textContent="Nenhum arquivo selecionado";save();toast("Importação concluída");
 };
 $("cancelImport").onclick=()=>{pendingImport=[];$("importPreview").classList.add("hidden")};

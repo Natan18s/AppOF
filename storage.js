@@ -55,8 +55,37 @@ function normalizeTransaction(t){
 }
 
 // Registra uma ação no histórico de "Últimos lançamentos" (guarda no máximo 300).
-function logActivity(kind,text,detail="",txId=""){
+function logActivity(kind,text,detail="",txId="",undo=null){
   data.activityLog=data.activityLog||[];
-  data.activityLog.unshift({id:uid(),at:Date.now(),kind,text,detail,txId});
+  const activity={id:uid(),at:Date.now(),kind,text,detail,txId};
+  if(undo?.changes?.length) activity.undo=structuredClone(undo);
+  data.activityLog.unshift(activity);
   if(data.activityLog.length>300) data.activityLog.length=300;
+}
+
+function undoActivity(activityId){
+  const activity=(data.activityLog||[]).find(a=>a.id===activityId);
+  if(!activity?.undo?.changes?.length||activity.undoneAt)return;
+  const index=data.activityLog.indexOf(activity), changes=activity.undo.changes;
+  const ids=new Set(changes.map(c=>c.after?.id||c.before?.id));
+  const hasLaterAction=data.activityLog.slice(0,index).some(a=>!a.undoneAt&&a.undo?.changes?.some(c=>ids.has(c.after?.id||c.before?.id)));
+  if(hasLaterAction){askAlert("Desfaça primeiro a ação mais recente deste lançamento.");return}
+  const matches=changes.every(c=>{
+    const id=c.after?.id||c.before?.id, current=data.transactions.find(t=>t.id===id);
+    if(c.before===null) return current&&JSON.stringify(current)===JSON.stringify(c.after);
+    if(c.after===null) return !current;
+    return current&&JSON.stringify(current)===JSON.stringify(c.after);
+  });
+  if(!matches){askAlert("Este lançamento mudou depois dessa ação. Desfaça primeiro as alterações mais recentes.");return}
+  changes.forEach(c=>{
+    const id=c.after?.id||c.before?.id;
+    if(c.before===null) data.transactions=data.transactions.filter(t=>t.id!==id);
+    else if(c.after===null) data.transactions.push(structuredClone(c.before));
+    else data.transactions=data.transactions.map(t=>t.id===id?structuredClone(c.before):t);
+  });
+  if(lastDeleted){lastDeleted=lastDeleted.filter(t=>!ids.has(t.id));if(!lastDeleted.length)lastDeleted=null}
+  activity.undoneAt=Date.now();
+  logActivity("undo",`Ação desfeita: ${activity.text}`,activity.detail);
+  save();
+  if(typeof toast==="function")toast("Ação desfeita");
 }

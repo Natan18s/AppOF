@@ -103,7 +103,8 @@ function renderDashboard(){
   $("activityBadge").textContent=String(log.length);
   $("activityList").innerHTML=log.length ? log.slice(0,100).map(a=>{
     const exists=a.txId&&data.transactions.some(t=>t.id===a.txId);
-    return `<div class="activity-item${exists?" clickable":""}"${exists?` onclick="goToTransaction('${a.txId}')" title="Ver em Lançamentos"`:""}><span class="activity-icon">${ACTIVITY_ICONS[a.kind]||"•"}</span><div class="activity-main"><b>${esc(a.text)}</b><div class="muted">${esc(a.detail||"")}</div></div><div class="activity-when muted">${fmtWhen(a.at)}</div></div>`;
+    const undoable=!!a.undo?.changes?.length&&!a.undoneAt;
+    return `<div class="activity-item${exists?" clickable":""}"${exists?` onclick="goToTransaction('${a.txId}')" title="Ver em Lançamentos"`:""}><span class="activity-icon">${ACTIVITY_ICONS[a.kind]||"•"}</span><div class="activity-main"><b>${esc(a.text)}</b><div class="muted">${esc(a.detail||"")}</div></div><div class="activity-meta"><div class="activity-when muted">${fmtWhen(a.at)}</div>${undoable?`<button class="btn activity-undo" type="button" onclick="event.stopPropagation();undoActivity('${esc(a.id)}')">Desfazer</button>`:a.undoneAt?'<span class="activity-undone">Desfeito</span>':""}</div></div>`;
   }).join("")+(log.length>100?`<div class="muted" style="padding:8px 0">Mostrando os 100 mais recentes de ${log.length}.</div>`:"") : '<div class="empty">Nenhuma atividade registrada ainda. O que você lançar, editar ou excluir daqui para frente aparece aqui.</div>';
 
   // Planilha do mês (gastos por categoria + entradas + saldo)
@@ -250,7 +251,8 @@ function setCashFilter(f){ cashFilter=f; renderDashboard(); }
 // Alterna um gasto entre "previsto" e "pago".
 function togglePaid(id){
   const t=data.transactions.find(x=>x.id===id); if(!t||t.type!=="expense")return;
+  const before=structuredClone(t);
   t.paymentStatus=t.paymentStatus==="paid"?"planned":"paid";
-  logActivity(t.paymentStatus==="paid"?"paid":"unpaid",`${t.paymentStatus==="paid"?"Marcado como pago":"Voltou para previsto"}: ${t.description}`,`${fmtMoney(t.value)} · pagamento em ${fmtDate(t.paymentDate||t.date)}`,t.id);
+  logActivity(t.paymentStatus==="paid"?"paid":"unpaid",`${t.paymentStatus==="paid"?"Marcado como pago":"Voltou para previsto"}: ${t.description}`,`${fmtMoney(t.value)} · pagamento em ${fmtDate(t.paymentDate||t.date)}`,t.id,{changes:[{before,after:structuredClone(t)}]});
   save(); toast(t.paymentStatus==="paid"?"Marcado como pago":"Voltou para previsto");   // save() recalcula o Resumo
 }

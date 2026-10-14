@@ -36,6 +36,37 @@ data.transactions = [
  {id:"i1",type:"income",date:"2026-10-05",description:"Salário",value:1000,source:"normal"}
 ];`;
 
+test("histórico: desfazer criação remove o lançamento", () => {
+  const { run } = novoAmbiente(); run(DADOS);
+  const actionId=run(`(()=>{const tx={id:"new-income",type:"income",date:"2026-10-10",description:"Extra",value:200};data.transactions.push(tx);logActivity("create","Nova entrada: Extra","R$ 200","new-income",{changes:[{before:null,after:structuredClone(tx)}]});return data.activityLog[0].id})()`);
+  run(`undoActivity(${JSON.stringify(actionId)})`);
+  assert.equal(run('data.transactions.some(t=>t.id==="new-income")'),false);
+  assert.ok(run(`data.activityLog.find(a=>a.id===${JSON.stringify(actionId)}).undoneAt`));
+});
+
+test("histórico: desfazer edição restaura os dados anteriores", () => {
+  const { run } = novoAmbiente(); run(DADOS);
+  const actionId=run(`(()=>{const before=structuredClone(data.transactions.find(t=>t.id==="i1"));const after={...before,description:"Salário novo",value:1200};data.transactions=data.transactions.map(t=>t.id==="i1"?after:t);logActivity("edit","Entrada editada: Salário novo","R$ 1.200","i1",{changes:[{before,after:structuredClone(after)}]});return data.activityLog[0].id})()`);
+  run(`undoActivity(${JSON.stringify(actionId)})`);
+  assert.equal(run('data.transactions.find(t=>t.id==="i1").description'),"Salário");
+  assert.equal(run('data.transactions.find(t=>t.id==="i1").value'),1000);
+});
+
+test("histórico: desfazer exclusão restaura o lançamento", () => {
+  const { run } = novoAmbiente(); run(DADOS);
+  const actionId=run(`(()=>{const before=structuredClone(data.transactions.find(t=>t.id==="i1"));data.transactions=data.transactions.filter(t=>t.id!=="i1");logActivity("delete","Excluído: Salário","Entrada","i1",{changes:[{before,after:null}]});return data.activityLog[0].id})()`);
+  run(`undoActivity(${JSON.stringify(actionId)})`);
+  assert.equal(run('data.transactions.find(t=>t.id==="i1").value'),1000);
+});
+
+test("histórico: impede desfazer fora da ordem", () => {
+  const { run } = novoAmbiente(); run(DADOS);
+  const olderId=run(`(()=>{const before=structuredClone(data.transactions.find(t=>t.id==="i1"));const after={...before,value:1100};data.transactions=data.transactions.map(t=>t.id==="i1"?after:t);logActivity("edit","Primeira edição","","i1",{changes:[{before,after:structuredClone(after)}]});return data.activityLog[0].id})()`);
+  run(`(()=>{const before=structuredClone(data.transactions.find(t=>t.id==="i1"));const after={...before,value:1200};data.transactions=data.transactions.map(t=>t.id==="i1"?after:t);logActivity("edit","Segunda edição","","i1",{changes:[{before,after:structuredClone(after)}]})})()`);
+  run(`undoActivity(${JSON.stringify(olderId)})`);
+  assert.equal(run('data.transactions.find(t=>t.id==="i1").value'),1200);
+});
+
 test("datas: soma e subtrai meses, inclusive na virada do ano", () => {
   const { run } = novoAmbiente();
   assert.equal(run('shiftMonthStr("2026-01",-1)'), "2025-12");
@@ -128,13 +159,21 @@ data.recurring = [
  {id:"r4",type:"expense",description:"Pausado",value:10,day:1,startMonth:"2026-10",endMonth:"",method:"pix",cardId:"",category:"Outros",active:false,generated:[]}
 ];`;
 
-test("recorrentes: gera do mês inicial até o mês seguinte ao atual", () => {
+test("recorrentes: gera do mês inicial até seis meses à frente", () => {
   const { run } = novoAmbiente(); run(MODELOS);
   const n = run('generateRecurring("2026-10-09")');
-  // Aluguel: set, out, nov (3) + Salário: out, nov (2) + Netflix: só out (1, tem mês final) + Pausado: 0
-  assert.equal(n, 6);
+  // Aluguel: set a abr (8) + Salário: out a abr (7) + Netflix: só out (1, tem mês final) + Pausado: 0
+  assert.equal(n, 16);
   const meses = JSON.parse(run('JSON.stringify(data.transactions.filter(t=>t.recurringId==="r1").map(t=>t.date).sort())'));
-  assert.deepEqual(meses, ["2026-09-08", "2026-10-08", "2026-11-08"]);
+  assert.deepEqual(meses, ["2026-09-08", "2026-10-08", "2026-11-08", "2026-12-08", "2027-01-08", "2027-02-08", "2027-03-08", "2027-04-08"]);
+});
+
+test("recorrentes: gera todo o período quando há mês final definido", () => {
+  const { run } = novoAmbiente(); run(MODELOS);
+  run(`data.recurring.push({id:"r5",type:"income",description:"Curso",value:500,day:6,startMonth:"2026-10",endMonth:"2026-12",active:true,generated:[]})`);
+  assert.equal(run('generateRecurring("2026-10-09")'), 19);
+  const dates=JSON.parse(run('JSON.stringify(data.transactions.filter(t=>t.recurringId==="r5").map(t=>t.date).sort())'));
+  assert.deepEqual(dates,["2026-10-06","2026-11-06","2026-12-06"]);
 });
 
 test("recorrentes: respeita datas exatas de início e fim", () => {
@@ -149,7 +188,7 @@ test("recorrentes: rodar de novo não duplica nada", () => {
   const { run } = novoAmbiente(); run(MODELOS);
   run('generateRecurring("2026-10-09")');
   assert.equal(run('generateRecurring("2026-10-09")'), 0);
-  assert.equal(run("data.transactions.length"), 6);
+  assert.equal(run("data.transactions.length"), 16);
 });
 
 test("recorrentes: lançamento excluído não volta; mês novo gera só o que falta", () => {
@@ -157,7 +196,7 @@ test("recorrentes: lançamento excluído não volta; mês novo gera só o que fa
   run('generateRecurring("2026-10-09")');
   run('data.transactions = data.transactions.filter(t=>!(t.recurringId==="r1" && t.date==="2026-10-08"))');   // exclui o aluguel de outubro
   assert.equal(run('generateRecurring("2026-10-20")'), 0);   // não recria
-  assert.equal(run('generateRecurring("2026-11-02")'), 2);   // chegou novembro: faltam só os de dezembro (aluguel e salário); o Netflix tem mês final
+  assert.equal(run('generateRecurring("2026-11-02")'), 2);   // avançou o horizonte: faltam só maio (aluguel e salário); o Netflix tem mês final
 });
 
 test("recorrentes: pausado não gera; ao retomar, gera", () => {
@@ -165,7 +204,7 @@ test("recorrentes: pausado não gera; ao retomar, gera", () => {
   run('generateRecurring("2026-10-09")');
   assert.equal(run('data.transactions.filter(t=>t.recurringId==="r4").length'), 0);
   run('data.recurring.find(r=>r.id==="r4").active = true');
-  assert.equal(run('generateRecurring("2026-10-09")'), 2);   // out e nov
+  assert.equal(run('generateRecurring("2026-10-09")'), 7);   // out a abr
 });
 
 test("recorrentes: crédito vence no mês seguinte e fica previsto; Pix futuro fica previsto; entrada vira income", () => {

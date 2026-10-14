@@ -62,7 +62,7 @@ let lastDeleted = null;   // guarda o último lançamento excluído, para o "Des
 const LOAN_CATEGORY = "Empréstimos cedidos";   // categoria especial: dinheiro emprestado a alguém
 
 // Ícone de cada tipo de atividade mostrado em "Últimos lançamentos".
-const ACTIVITY_ICONS={create:"➕",edit:"✏️",delete:"🗑️",paid:"✅",unpaid:"↩️",received:"💰",import:"📥",restore:"♻️",bulk:"📅"};
+const ACTIVITY_ICONS={create:"➕",edit:"✏️",delete:"🗑️",paid:"✅",unpaid:"↩️",received:"💰",import:"📥",restore:"♻️",bulk:"📅",undo:"↶"};
 
 // Formas de pagamento disponíveis no formulário de gasto.
 const METHODS={pix:"Pix",debit:"Débito",cash:"Dinheiro",credit:"Crédito",installment:"Parcelado"};

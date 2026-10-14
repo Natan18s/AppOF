@@ -90,11 +90,15 @@ details.card summary .pill{font-weight:600}
 .detail-table table{min-width:0}
 tr.row-highlight{animation:rowFlash 2.8s ease}
 @keyframes rowFlash{0%{background:var(--flash)}70%{background:var(--flash)}100%{background:transparent}}
-.activity-item{display:grid;grid-template-columns:26px 1fr auto;gap:9px;align-items:start;padding:10px 4px;border-bottom:1px solid var(--line)}
+.activity-item{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:9px;align-items:start;padding:10px 4px;border-bottom:1px solid var(--line)}
 .activity-item:last-child{border-bottom:0}
 .activity-item.clickable{cursor:pointer;border-radius:8px}.activity-item.clickable:hover{background:var(--hover)}
 .activity-icon{font-size:15px;line-height:1.5}
 .activity-when{font-size:11px;white-space:nowrap}
+.activity-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.activity-undo{padding:4px 8px;font-size:11px}
+.activity-undone{color:var(--muted);font-size:11px}
+@media(max-width:520px){.activity-item{grid-template-columns:22px minmax(0,1fr)}.activity-meta{grid-column:2;flex-direction:row;justify-content:space-between;align-items:center}}
 .reminder-banner{margin-bottom:14px;padding:10px 13px;border:1px solid var(--warn-line);background:var(--warn-bg);color:var(--warn-fg);border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .reminder-banner .btn{padding:5px 10px;font-size:12px}
 .metric-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
