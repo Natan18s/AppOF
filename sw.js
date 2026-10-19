@@ -6,12 +6,12 @@ const CACHE="meu-controle-cache";
 // Lista de arquivos guardados. Se criar um arquivo novo (.css ou .js), inclua-o aqui.
 const FILES=[
   "./","./index.html","./manifest.json",
-  "./icons/icon-192.png","./icons/icon-512.png","./icons/icon-maskable-512.png",
-  "./css/theme.css","./css/base.css","./css/components.css",
-  "./js/utils.js", "./js/config.js", "./js/theme.js", "./js/calculations.js", "./js/storage.js",
-  "./js/ui.js", "./js/dashboard.js", "./js/sheet-drag.js", "./js/transactions.js", "./js/cadastros.js",
-  "./js/importer.js", "./js/backup.js", "./js/recorrentes.js", "./js/graficos.js", "./js/exportar.js",
-  "./js/demo.js", "./js/bloqueio.js", "./js/integridade.js", "./js/main.js"
+  "./icon-192.png","./icon-512.png","./icon-maskable-512.png",
+  "./theme.css","./base.css","./components.css",
+  "./utils.js", "./config.js", "./theme.js", "./calculations.js", "./storage.js",
+  "./ui.js", "./dashboard.js", "./sheet-drag.js", "./transactions.js", "./cadastros.js",
+  "./importer.js", "./backup.js", "./recorrentes.js", "./graficos.js", "./exportar.js",
+  "./demo.js", "./bloqueio.js", "./integridade.js", "./main.js"
 ];
 // Instalação: baixa e guarda todos os arquivos da lista
 // ("reload" ignora a cópia temporária do navegador, para guardar sempre a versão mais nova do servidor)
