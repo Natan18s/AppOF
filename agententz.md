@@ -13,7 +13,7 @@
 - Para economizar tokens, os comentários devem ser curtos, diretos e focados apenas na lógica principal (o que o bloco faz), evitando redundâncias ou explicações de linhas óbvias.
 
 ## 4. Controle de Versão Inteligente
-- O cabeçalho do arquivo HTML principal deve possuir uma marcação discreta de versão (ex: `<!-- Versão 1 -->`).
+- O cabeçalho do arquivo HTML principal deve possuir uma marcação discreta de versão como um **selo pequeno e visível no cabeçalho do app** (`<span id="appVersion">vNN</span>` em `index.html`).
 - Atualize e incremente esse número de versão a cada modificação.
 
 ## 5. Como o usuário gosta de ser atendido (acrescentado com base no que foi aprendido)
@@ -36,5 +36,3 @@
 - **Teste de verdade** antes de entregar (testes automáticos e navegador) e relate o resultado.
 - Ele usa **mais de uma IA** (a do VS Code e outras): mantenha os documentos do projeto atualizados e leia os arquivos reais antes de assumir.
 
-## 8. Esclarecimento sobre o item 4 (versão)
-- No projeto atual a versão é um **selo pequeno e visível no cabeçalho do app** (`<span id="appVersion">vNN</span>` em `index.html`), no lugar do comentário `<!-- Versão N -->`. Continua discreto e é incrementado a cada modificação. O `sw.js` não carrega número de versão.
