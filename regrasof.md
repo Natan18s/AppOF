@@ -1,6 +1,6 @@
 # regrasof.md — Regras e funcionalidades do app
 
-> App **Meu Controle Financeiro** (HTML + CSS + JavaScript puros, dados no aparelho, PWA). Os arquivos `.js` ficam em `js/` e os `.css` em `css/`. Este arquivo descreve **o que o app faz e as regras que ele segue**. Para saber como trabalhar no código, veja `agenteof.md`.
+> App **Meu Controle Financeiro** (HTML + CSS + JavaScript puros, dados no aparelho, PWA). Os arquivos `.js`, `.css` e os ícones ficam na raiz do repositório. Este arquivo descreve **o que o app faz e as regras que ele segue**. Para saber como trabalhar no código, veja `agenteof.md`.
 
 ## 1. Funcionalidades
 

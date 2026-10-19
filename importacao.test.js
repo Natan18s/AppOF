@@ -20,7 +20,7 @@ function novoAmbiente({ confirma = true } = {}) {
   };
   const ctx = vm.createContext(sandbox);
   for (const f of ["utils.js", "config.js", "calculations.js", "storage.js", "importer.js"]) {
-    vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", f), "utf8"), ctx, { filename: f });
+    vm.runInContext(fs.readFileSync(path.join(__dirname, f), "utf8"), ctx, { filename: f });
   }
   vm.runInContext('data = structuredClone(defaultData); data.cards = [{id:"c1",name:"Cartão",limit:1000,closing:10,due:19}];', ctx);
   return { sandbox, run: code => vm.runInContext(code, ctx) };

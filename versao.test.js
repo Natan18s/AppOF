@@ -7,7 +7,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const lerArquivo = nome => fs.readFileSync(path.join(__dirname, "..", nome), "utf8");   // index.html e sw.js ficam na raiz do projeto
+const lerArquivo = nome => fs.readFileSync(path.join(__dirname, nome), "utf8");   // index.html e sw.js ficam na raiz do projeto
 
 test("o cabeçalho do index.html mostra a versão do app (vNN, número inteiro positivo)", () => {
   const html = lerArquivo("index.html");

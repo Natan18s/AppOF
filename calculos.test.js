@@ -20,7 +20,7 @@ function novoAmbiente() {
   };
   const ctx = vm.createContext(sandbox);
   for (const f of ["utils.js", "config.js", "calculations.js", "storage.js", "recorrentes.js", "graficos.js", "exportar.js", "demo.js", "bloqueio.js", "integridade.js"]) {
-    vm.runInContext(fs.readFileSync(path.join(__dirname, "..", "js", f), "utf8"), ctx, { filename: f });
+    vm.runInContext(fs.readFileSync(path.join(__dirname, f), "utf8"), ctx, { filename: f });
   }
   return { run: code => vm.runInContext(code, ctx) };
 }
