@@ -6,11 +6,11 @@
 <meta name="theme-color" content="#14275f">
 <title>Meu Controle Financeiro</title>
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <!-- Estilos: cores dos temas -> estrutura geral -> componentes (a ordem importa) -->
-<link rel="stylesheet" href="theme.css">
-<link rel="stylesheet" href="base.css">
-<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
 <!-- Se houver PIN ativado, marca o app como bloqueado ANTES de a página aparecer (js/bloqueio.js cuida do resto). -->
 <script>try{if(JSON.parse(localStorage.getItem("meu-controle-lock")||"null").hash)document.documentElement.classList.add("locked")}catch(e){}</script>
 <!-- Aplica o tema salvo ANTES de a página aparecer (evita piscar). Padrão: modo claro. -->
@@ -33,7 +33,7 @@
 <header class="app-header">
   <div class="topbar">
     <div>
-      <div class="brand">💰 Meu Controle</div>
+      <div class="brand">💰 Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" style="font-size:11px;font-weight:700;letter-spacing:0;margin-left:6px;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.18);vertical-align:middle">v26</span></div>
       <div class="subtitle">Finanças, cartões, parcelas e reembolsos em um só lugar</div>
     </div>
     <div class="top-actions">
@@ -436,25 +436,25 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <!-- Código do app. A ordem importa: cada arquivo usa o que vem antes dele; main.js é sempre o último. -->
-<script src="utils.js"></script>
-<script src="config.js"></script>
-<script src="theme.js"></script>
-<script src="calculations.js"></script>
-<script src="storage.js"></script>
-<script src="ui.js"></script>
-<script src="dashboard.js"></script>
-<script src="sheet-drag.js"></script>
-<script src="transactions.js"></script>
-<script src="cadastros.js"></script>
-<script src="importer.js"></script>
-<script src="backup.js"></script>
-<script src="recorrentes.js"></script>
-<script src="graficos.js"></script>
-<script src="exportar.js"></script>
-<script src="demo.js"></script>
-<script src="bloqueio.js"></script>
-<script src="integridade.js"></script>
-<script src="main.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/config.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/calculations.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/sheet-drag.js"></script>
+<script src="js/transactions.js"></script>
+<script src="js/cadastros.js"></script>
+<script src="js/importer.js"></script>
+<script src="js/backup.js"></script>
+<script src="js/recorrentes.js"></script>
+<script src="js/graficos.js"></script>
+<script src="js/exportar.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/bloqueio.js"></script>
+<script src="js/integridade.js"></script>
+<script src="js/main.js"></script>
 <!-- Registra o service worker (permite instalar o app no celular e abrir sem internet) -->
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>
 </body>
