@@ -303,6 +303,7 @@ $("backupInput").onchange=restoreBackup;
 history.replaceState({tab:"dashboard"},"");   // entrada inicial do histórico (aba Resumo)
 window.addEventListener("popstate",e=>{
   if(ignorePop>0){ ignorePop--; return; }                                  // evento causado pelo próprio app ao fechar o painel ou a caixa de confirmação
+  if(closeSelectSheet("pop")) return;                                       // voltar com a lista de escolha aberta: fecha só a lista
   if(closeTopConfirm()) return;                                            // voltar com uma caixa de confirmação aberta: só fecha a caixa (cancela)
   if(!$("modal").classList.contains("hidden")){ closeModal("pop"); return; }   // 1º voltar: fecha o painel aberto
   const tab=(e.state&&e.state.tab)||"dashboard";

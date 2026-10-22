@@ -83,6 +83,53 @@ function closeModal(mode){
   if(mode!=="pop"){ ignorePop++; history.back(); }
 }
 
+// ----- Lista de escolha do app (no lugar da lista nativa dos <select>) -----
+// Em alguns celulares a lista nativa abre fora da tela. Por isso o CSS desliga o toque direto nos <select> e o bloco abaixo abre uma
+// lista própria, colada embaixo da tela. O <select> continua na página: guarda o valor e recebe o evento "change" como antes.
+let selSheet=null;   // lista aberta agora (null = nenhuma)
+
+// Fecha a lista. mode="pop": veio do botão voltar (a entrada do histórico já saiu). Devolve true se havia lista aberta.
+function closeSelectSheet(mode){
+  if(!selSheet)return false;
+  selSheet.remove(); selSheet=null;
+  if(mode!=="pop"){ ignorePop++; history.back(); }
+  return true;
+}
+
+// Abre a lista com as opções do <select> escolhido; tocar numa opção grava o valor e fecha.
+function openSelectSheet(sel){
+  if(selSheet)return;
+  const name=(sel.closest("div")?.querySelector("label")?.textContent||sel.getAttribute("aria-label")||"Escolha uma opção").trim();
+  selSheet=document.createElement("div"); selSheet.className="sel-sheet";
+  selSheet.innerHTML=`<div class="sel-box" role="listbox" aria-label="${esc(name)}"><div class="sel-title">${esc(name)}</div>${[...sel.options].map((o,i)=>{
+    const on=i===sel.selectedIndex;
+    return `<button type="button" class="sel-opt${on?" on":""}" data-i="${i}" role="option" aria-selected="${on}"${o.disabled?" disabled":""}><span>${esc(o.textContent)}</span>${on?"<b>✓</b>":""}</button>`;
+  }).join("")}</div>`;
+  selSheet.onclick=e=>{
+    const b=e.target.closest(".sel-opt");
+    if(b&&!b.disabled){
+      sel.selectedIndex=Number(b.dataset.i);
+      sel.dispatchEvent(new Event("input",{bubbles:true})); sel.dispatchEvent(new Event("change",{bubbles:true}));
+      closeSelectSheet();
+    } else if(!b&&e.target===selSheet) closeSelectSheet();   // tocar fora da lista fecha
+  };
+  document.body.appendChild(selSheet);
+  history.pushState({tab:currentTab,sheet:true},"");   // o botão voltar do celular vai fechar só esta lista
+  selSheet.querySelector(".on")?.scrollIntoView({block:"center"});
+}
+
+// Toque num <select> visível (do painel aberto ou da tela) abre a lista própria. O toque é achado pela posição, pois o CSS desliga o toque no <select>.
+document.addEventListener("click",e=>{
+  if(selSheet||!e.clientX&&!e.clientY||document.documentElement.classList.contains("confirm-open"))return;
+  const area=$("modal").classList.contains("hidden")?document:$("modal");
+  for(const s of area.querySelectorAll("select")){
+    if(s.disabled||!s.offsetParent)continue;
+    const r=s.getBoundingClientRect();
+    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){ e.preventDefault(); e.stopPropagation(); openSelectSheet(s); return; }
+  }
+},true);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&selSheet){ e.preventDefault(); e.stopImmediatePropagation(); closeSelectSheet(); } },true);   // Esc fecha só a lista
+
 // ----- Caixa de confirmação/aviso do próprio app (no lugar do confirm()/alert() do navegador) -----
 // Uso: if(await askConfirm("Mensagem",{title:"Título",okText:"Excluir",danger:true})) {...}   (devolve true/false)
 // askAlert("Mensagem") mostra só um aviso com botão OK (não precisa de await).
