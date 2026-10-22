@@ -1,115 +1,8 @@
+/* ===== transaction-form.js ===== */
 // ====================================================================
-// transactions.js — aba Lançamentos e formulário de gasto/entrada
-// Tabela, seleção em massa (alterar data/excluir), formulário com divisão por pessoa e parcelas, reembolsos.
+// transaction-form.js — formulário de gasto/entrada
+// Formulário com divisão por pessoa e parcelas, salvar/editar/excluir lançamento, desfazer e reembolsos.
 // ====================================================================
-
-// Etiquetas de categoria (com valor) de um gasto.
-function categoryLabels(t){
-  const splits=t.splits||[];
-  if(!splits.length) return "—";
-  return splits.map(s=>`<span class="tag">${esc(s.category)} · ${fmtMoney(s.amount)}</span>`).join(" ");
-}
-
-// Quanto cada pessoa paga em um gasto (Você, João...).
-function peopleLabels(t){
-  if(t.type!=="expense") return "—";
-  const people={};
-  (t.splits||[]).forEach(s=>{const p=s.ownerId==="self"?"Você":data.people.find(x=>x.id===s.ownerId)?.name||"Outra pessoa";people[p]=(people[p]||0)+Number(s.amount||0)});
-  return Object.entries(people).map(([p,v])=>`${esc(p)}: ${fmtMoney(v)}`).join("<br>");
-}
-
-// Texto da forma de pagamento (Pix, Débito, Crédito · Nubank...).
-function paymentLabel(t){
-  if(t.type==="card_payment") return "Crédito";
-  const card=t.cardId?esc(data.cards.find(c=>c.id===t.cardId)?.name||"Cartão"):"";
-  if(t.method&&METHODS[t.method]) return isCreditMethod(t.method)?`${METHODS[t.method]}${card?" · "+card:""}`:METHODS[t.method];
-  return card||"Pix / débito / dinheiro";
-}
-
-// Data de pagamento previsto/realizado com a cor do status.
-function paymentDateLabel(t){
-  if(t.type!=="expense") return "—";
-  const d=t.paymentDate||t.date;
-  const status=t.paymentStatus||"planned";
-  return `<span class="${status==="paid"?"pay-paid":"pay-planned"}"><b>${fmtDate(d)}</b><br><small>${status==="paid"?"Pago":"Previsto"}</small></span>`;
-}
-
-// Marca ou desmarca um lançamento na seleção.
-function toggleSelect(id,checked){if(checked)selectedTxIds.add(id);else selectedTxIds.delete(id);updateBulkBar();}
-
-// Marca ou desmarca todos os lançamentos visíveis (gastos e entradas).
-function toggleSelectAll(e){
-  const checks=[...document.querySelectorAll(".tx-check")];
-  checks.forEach(c=>{c.checked=e.target.checked;if(c.checked)selectedTxIds.add(c.value);else selectedTxIds.delete(c.value)});
-  updateBulkBar();
-}
-
-// Mostra ou esconde a barra de ações em massa conforme há lançamentos selecionados.
-function updateBulkBar(){
-  $("selectedCount").textContent=selectedTxIds.size;
-  $("bulkBar").classList.toggle("hidden",selectedTxIds.size===0);
-}
-
-// Desenha a tabela da aba Lançamentos, aplicando mês, busca e tipo. Um gasto também aparece no mês do pagamento previsto.
-function renderTransactions(){
-  // 1) Lê os filtros da tela: mês, texto da busca e tipo (gasto/entrada)
-  const m=$("txMonth").value||month,q=($("txSearch").value||"").toLowerCase(),type=$("txType").value;
-  // mostra o gasto no mês da compra e também no mês do pagamento previsto (ex.: compra no crédito paga no mês seguinte)
-  const inMonth=t=>t.date.slice(0,7)===m || (t.type==="expense" && (t.paymentDate||t.date).slice(0,7)===m);
-  let arr=data.transactions.filter(t=>inMonth(t) && (!type||t.type===type));
-  if(q) arr=arr.filter(t=>(t.description+" "+(t.splits||[]).map(s=>s.category).join(" ")+" "+(t.notes||"")).toLowerCase().includes(q));
-  arr.sort(byNewest);
-  // 2) Mantém marcados só os lançamentos que continuam visíveis e atualiza o "Selecionar" do cabeçalho
-  const visibleIds=new Set(arr.map(t=>t.id));
-  [...selectedTxIds].forEach(id=>{if(!visibleIds.has(id))selectedTxIds.delete(id)});
-  $("selectAllTx").checked=arr.length>0 && arr.every(t=>selectedTxIds.has(t.id));
-  // 3) Desenha uma linha da tabela para cada lançamento
-  $("txTable").innerHTML=arr.length ? arr.map(t=>{
-    const par=t.installments>1?`${t.installmentNo||1}/${t.installments}`:"—";
-    const val=t.type==="expense"?`- ${fmtMoney(t.value)}`:`+ ${fmtMoney(t.value)}`;
-    const cls=t.type==="expense"?"negative":"positive";
-    return `<tr id="tx-${t.id}">
-      <td class="select-col"><input class="tx-check" type="checkbox" aria-label="Selecionar lançamento" value="${t.id}" ${selectedTxIds.has(t.id)?"checked":""} onchange="toggleSelect('${t.id}',this.checked)"></td>
-      <td class="c-date" data-label="Data">${fmtDate(t.date)}</td><td class="c-desc"><b>${esc(t.description)}</b>${t.notes?`<div class="muted">${esc(t.notes)}</div>`:""}${t.type==="expense"&&t.date.slice(0,7)!==m?`<div><span class="tag">Compra de ${fmtMonthLabel(t.date)} · pagamento neste mês</span></div>`:""}</td>
-      <td class="${t.type==="expense"||t.source==="reimbursement"?"":"c-empty"}" data-label="Categoria">${t.type==="expense"?categoryLabels(t):t.source==="reimbursement"?'<span class="pill">Reembolso</span>':"—"}</td>
-      <td data-label="Forma">${paymentLabel(t)}</td><td data-label="Responsável">${peopleLabels(t)}</td><td data-label="Pag. previsto">${paymentDateLabel(t)}</td><td class="${par==="—"?"c-empty":""}" data-label="Parcela">${par}</td>
-      <td class="right c-val ${cls}">${val}</td>
-      <td class="c-act"><div class="row-actions">${t.type!=="card_payment"?`<button class="btn" onclick="editTransaction('${t.id}')">Editar</button>`:""}<button class="btn ghost" onclick="removeTransaction('${t.id}')">Excluir</button></div></td>
-    </tr>`;
-  }).join("") : '<tr><td colspan="10" class="empty">Nenhum lançamento encontrado.</td></tr>';
-  // 4) Mostra ou esconde a barra de ações em massa
-  updateBulkBar();
-}
-
-// Painel para definir a data/status de pagamento de todos os gastos selecionados.
-function openBulkPaymentModal(){
-  const ids=[...selectedTxIds], expenses=ids.map(id=>data.transactions.find(t=>t.id===id)).filter(t=>t?.type==="expense");
-  if(!expenses.length){askAlert("Selecione pelo menos um gasto. A data de pagamento previsto só vale para gastos.");return}
-  const suggested=expenses.length===1?(expenses[0].paymentDate||nextCardPaymentDate(expenses[0].cardId,expenses[0].date)):(month+"-19");
-  openModal("Definir pagamento previsto",`<form id="bulkPayForm"><p>Você selecionou <b>${expenses.length}</b> gasto(s). A data abaixo será aplicada a todos.${ids.length>expenses.length?" As entradas selecionadas serão ignoradas.":""}</p><div><label>Data de pagamento</label><input name="paymentDate" type="date" value="${suggested}" required></div><div style="margin-top:10px"><label>Status</label><select name="status"><option value="planned">Pagamento previsto</option><option value="paid">Já pago</option></select></div><div class="row-actions end" style="margin-top:15px"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary">Aplicar aos selecionados</button></div></form>`);
-  $("bulkPayForm").onsubmit=e=>{e.preventDefault();const f=new FormData(e.target),changes=expenses.map(t=>{const before=structuredClone(t);t.paymentDate=f.get("paymentDate");t.paymentStatus=f.get("status");return{before,after:structuredClone(t)}});logActivity("bulk",`Pagamento previsto definido em ${expenses.length} gasto(s)`,`Data ${fmtDate(f.get("paymentDate"))} · ${f.get("status")==="paid"?"já pago":"previsto"} · ${expenses.slice(0,3).map(t=>t.description).join(", ")}${expenses.length>3?"…":""}`,"",{changes});selectedTxIds.clear();closeModal();save();toast(`Pagamento previsto aplicado a ${expenses.length} gasto(s)`) };
-}
-
-// Remove a previsão de pagamento dos gastos selecionados (volta para a data da compra, como pago).
-function clearBulkPaymentDate(){
-  const expenses=[...selectedTxIds].map(id=>data.transactions.find(t=>t.id===id)).filter(t=>t?.type==="expense");
-  if(!expenses.length){toast("Selecione pelo menos um gasto.");return}
-  const changes=expenses.map(t=>{const before=structuredClone(t);t.paymentDate=t.date;t.paymentStatus="paid";return{before,after:structuredClone(t)}});logActivity("bulk",`Previsão de pagamento removida de ${expenses.length} gasto(s)`,expenses.slice(0,3).map(t=>t.description).join(", ")+(expenses.length>3?"…":""),"",{changes});selectedTxIds.clear();save();toast("Previsão de pagamento removida");
-}
-
-// Exclui de uma vez todos os lançamentos selecionados, com confirmação e opção de desfazer.
-async function bulkDelete(){
-  const items=[...selectedTxIds].map(id=>data.transactions.find(t=>t.id===id)).filter(Boolean);
-  if(!items.length)return;
-  if(!(await askConfirm(`Excluir ${items.length} lançamento(s) selecionado(s)? Logo depois você poderá desfazer.`,{title:"Excluir lançamentos",okText:"Excluir",danger:true})))return;
-  const ids=new Set(items.map(t=>t.id));
-  data.transactions=data.transactions.filter(t=>!ids.has(t.id));
-  logActivity("delete",`${items.length} lançamento(s) excluído(s) de uma vez`,items.slice(0,3).map(t=>t.description).join(", ")+(items.length>3?"…":""),"",{changes:items.map(t=>({before:structuredClone(t),after:null}))});
-  lastDeleted=items;
-  selectedTxIds.clear();
-  save();
-  showToast(`${items.length} lançamento(s) excluído(s)`,"Desfazer",undoDelete);
-}
 
 // "Para onde foi" um gasto: categorias, forma/cartão, pagamento previsto e pessoas envolvidas
 function expenseDestination(t){
@@ -501,3 +394,5 @@ function markReimbursement(txId,splitIndex){
   logActivity("received",`${isLoan?"Empréstimo devolvido":"Reembolso recebido"} de ${p?.name||"outra pessoa"}: ${fmtMoney(s.amount)}`,`Referente a "${t.description}" (${s.category}) · entrou como entrada em ${fmtDate(inc.date)}`,inc.id,{changes:[{before:beforeExpense,after:structuredClone(t)},{before:null,after:structuredClone(inc)}]});
   save();toast("Reembolso registrado");
 }
+
+;

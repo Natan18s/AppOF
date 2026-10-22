@@ -7,6 +7,21 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+// Junta os scripts do app na mesma ordem em que o index.html os carrega.
+const appSource = [...fs.readFileSync(path.join(__dirname, "index.html"), "utf8").matchAll(/<script\s+src="([^"]+)"/g)]
+  .map(m => fs.readFileSync(path.join(__dirname, m[1]), "utf8")).join("\n");
+
+function carregarArquivos(ctx, arquivos) {
+  for (const arquivo of arquivos) {
+    const marcador = `/* ===== ${arquivo} ===== */`;
+    const inicio = appSource.indexOf(marcador);
+    assert.notEqual(inicio, -1, `seção ${arquivo} não encontrada nos scripts do index.html`);
+    const codigoInicio = inicio + marcador.length;
+    const proximaSecao = appSource.indexOf("\n/* ===== ", codigoInicio);
+    const codigo = appSource.slice(codigoInicio, proximaSecao === -1 ? undefined : proximaSecao);
+    vm.runInContext(codigo, ctx, { filename: arquivo });
+  }
+}
 
 // Ambiente de teste: o mínimo que o navegador oferece, mais respostas combinadas para as caixas de confirmação.
 function novoAmbiente({ confirma = true } = {}) {
@@ -19,9 +34,7 @@ function novoAmbiente({ confirma = true } = {}) {
     askConfirm(msg) { sandbox.perguntas.push(msg); return Promise.resolve(confirma); }
   };
   const ctx = vm.createContext(sandbox);
-  for (const f of ["utils.js", "config.js", "calculations.js", "storage.js", "importer.js"]) {
-    vm.runInContext(fs.readFileSync(path.join(__dirname, f), "utf8"), ctx, { filename: f });
-  }
+  carregarArquivos(ctx, ["utils.js", "config.js", "calculations.js", "storage.js", "importer.js"]);
   vm.runInContext('data = structuredClone(defaultData); data.cards = [{id:"c1",name:"Cartão",limit:1000,closing:10,due:19}];', ctx);
   return { sandbox, run: code => vm.runInContext(code, ctx) };
 }

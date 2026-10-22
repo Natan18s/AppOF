@@ -6,12 +6,9 @@ const CACHE="meu-controle-cache";
 // Lista de arquivos guardados. Se criar um arquivo novo (.css ou .js), inclua-o aqui.
 const FILES=[
   "./","./index.html","./manifest.json",
-  "./icon-192.png","./icon-512.png","./icon-maskable-512.png",
-  "./theme.css","./base.css","./components.css",
-  "./utils.js", "./config.js", "./theme.js", "./calculations.js", "./storage.js",
-  "./ui.js", "./dashboard.js", "./sheet-drag.js", "./transactions.js", "./cadastros.js",
-  "./importer.js", "./backup.js", "./recorrentes.js", "./graficos.js", "./exportar.js",
-  "./demo.js", "./bloqueio.js", "./integridade.js", "./main.js"
+  "./icon-192.png","./icon-512.png",
+  "./app.css",
+  "./01-base.js","./02-resumo.js","./03-lancamentos.js","./04-formulario.js","./05-cadastros.js","./06-extras.js","./07-inicio.js"
 ];
 // Instalação: baixa e guarda todos os arquivos da lista
 // ("reload" ignora a cópia temporária do navegador, para guardar sempre a versão mais nova do servidor)

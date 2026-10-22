@@ -7,17 +7,15 @@
 <title>Meu Controle Financeiro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<!-- Estilos: cores dos temas -> estrutura geral -> componentes (a ordem importa) -->
-<link rel="stylesheet" href="theme.css">
-<link rel="stylesheet" href="base.css">
-<link rel="stylesheet" href="components.css">
-<!-- Se houver PIN ativado, marca o app como bloqueado ANTES de a página aparecer (bloqueio.js cuida do resto). -->
+<!-- Estilos agrupados: tema -> estrutura geral -> componentes (a ordem importa). -->
+<link rel="stylesheet" href="app.css">
+<!-- Se houver PIN ativado, marca o app como bloqueado ANTES de a página aparecer (seção bloqueio.js (arquivo 07-inicio.js) cuida do resto). -->
 <script>try{if(JSON.parse(localStorage.getItem("meu-controle-lock")||"null").hash)document.documentElement.classList.add("locked")}catch(e){}</script>
 <!-- Aplica o tema salvo ANTES de a página aparecer (evita piscar). Padrão: modo claro. -->
 <script>(function(){try{var t=localStorage.getItem("meu-controle-theme");if(t!=="dark")t="light";document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#0a101d":"#14275f"}catch(e){}})()</script>
 </head>
 <body>
-<!-- TELA DE BLOQUEIO: só aparece quando o PIN está ativado e o app está bloqueado (bloqueio.js) -->
+<!-- TELA DE BLOQUEIO: só aparece quando o PIN está ativado e o app está bloqueado (seção bloqueio.js (arquivo 07-inicio.js)) -->
 <div id="lockScreen" class="lock-screen" role="dialog" aria-modal="true" aria-label="App bloqueado">
   <form id="lockForm" class="lock-box" autocomplete="off">
     <div class="lock-ico" aria-hidden="true">🔒</div>
@@ -33,7 +31,7 @@
 <header class="app-header">
   <div class="topbar">
     <div>
-      <div class="brand">💰 Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" style="font-size:11px;font-weight:700;letter-spacing:0;margin-left:6px;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.18);vertical-align:middle">v27</span></div>
+      <div class="brand">💰 Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" style="font-size:11px;font-weight:700;letter-spacing:0;margin-left:6px;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.18);vertical-align:middle">v29</span></div>
       <div class="subtitle">Finanças, cartões, parcelas e reembolsos em um só lugar</div>
     </div>
     <div class="top-actions">
@@ -44,10 +42,10 @@
   </div>
 </header>
 
-<!-- FAIXA DO MODO DEMONSTRAÇÃO: aparece só quando os dados fictícios estão ativos (demo.js) -->
+<!-- FAIXA DO MODO DEMONSTRAÇÃO: aparece só quando os dados fictícios estão ativos (seção demo.js (arquivo 06-extras.js)) -->
 <div id="demoBanner" class="demo-banner hidden" role="status"></div>
 
-<!-- CONTEÚDO PRINCIPAL: abas + uma seção (page) por aba. Só uma fica visível por vez (troca em ui.js > switchTab) -->
+<!-- CONTEÚDO PRINCIPAL: abas + uma seção (page) por aba. Só uma fica visível por vez (seção ui.js > switchTab (arquivo 02-resumo.js)) -->
 <main class="container">
   <!-- ABAS de navegação -->
   <nav class="tabs" aria-label="Navegação">
@@ -69,7 +67,7 @@
       <div class="month-nav"><button type="button" class="btn month-step" data-month-step="-1" aria-label="Mês anterior" title="Mês anterior">‹</button><input id="dashboardMonth" type="month" class="month" aria-label="Mês visto"><button type="button" class="btn month-step" data-month-step="1" aria-label="Próximo mês" title="Próximo mês">›</button></div>
     </div>
     <div id="backupReminder" class="reminder-banner hidden"></div>
-    <!-- BOAS-VINDAS: só enquanto não há lançamentos (demo.js) -->
+    <!-- BOAS-VINDAS: só enquanto não há lançamentos (seção demo.js (arquivo 06-extras.js)) -->
     <article id="welcomeCard" class="card section hidden"></article>
 
     <!-- OS 4 CARDS DO TOPO (clicáveis: abrem a lista de lançamentos): Entradas (verde), Saídas previstas (laranja), Gasto realmente seu (vermelho) e Saldo previsto -->
@@ -112,7 +110,7 @@
       </article>
     </div>
 
-    <!-- GRÁFICOS: últimos 6 meses e distribuição das saídas do mês (desenhados em graficos.js) -->
+    <!-- GRÁFICOS: últimos 6 meses e distribuição das saídas do mês (seção graficos.js (arquivo 06-extras.js)) -->
     <div class="grid-2 section">
       <article class="card"><div class="card-head"><h2>📈 Últimos 6 meses</h2><div class="trend-nav"><button type="button" class="btn ghost" id="trendPrev" aria-label="Ver seis meses anteriores" title="Seis meses anteriores">‹</button><span id="trendPeriodLabel" class="muted"></span><button type="button" class="btn ghost" id="trendNext" aria-label="Ver seis meses seguintes" title="Seis meses seguintes">›</button></div></div><div id="chartTrend"></div></article>
       <article class="card"><div class="card-head"><h2>🥧 Para onde foi o dinheiro</h2></div><div id="chartDonut"></div></article>
@@ -183,7 +181,7 @@
       <div class="row-actions"><button class="btn primary" id="bulkPaymentDate">📅 Definir pagamento previsto</button><button class="btn" id="bulkClearPayment">Limpar previsão</button><button class="btn danger" id="bulkDelete">🗑️ Excluir selecionados</button><button class="btn ghost" id="clearSelection">Cancelar seleção</button></div>
     </div>
 
-    <!-- TABELA de lançamentos (linhas desenhadas em transactions.js > renderTransactions) -->
+    <!-- TABELA de lançamentos (seção transactions.js > renderTransactions (arquivo 03-lancamentos.js)) -->
   <article class="table-card">
       <div class="table-wrap">
         <table class="tx-table">
@@ -226,7 +224,7 @@
       </details>
     </article>
 
-    <!-- RECORRENTES: modelos que o app transforma em lançamentos todo mês (recorrentes.js) -->
+    <!-- RECORRENTES: modelos que o app transforma em lançamentos todo mês (seção recorrentes.js (arquivo 06-extras.js)) -->
     <article class="card section">
       <div class="card-head"><h2>🔁 Lançamentos recorrentes</h2><button class="btn primary" id="newRecurring">+ Recorrente</button></div>
       <div class="muted" style="margin-bottom:6px">Aluguel, assinaturas, salário...: cadastre uma vez e o app cria o lançamento de todo mês.</div>
@@ -424,7 +422,7 @@
 
 </main>
 
-<!-- PAINEL (modal): janela usada por formulários e listas de detalhe. Conteúdo preenchido por ui.js > openModal -->
+<!-- PAINEL (modal): janela usada por formulários e listas de detalhe. Conteúdo preenchido por ui.js > openModal (arquivo 02-resumo.js) -->
 <div id="modal" class="modal hidden">
   <div class="modal-box large">
     <div class="modal-head"><h2 id="modalTitle"></h2><button class="icon-btn" id="closeModal">✕</button></div>
@@ -435,26 +433,14 @@
 <!-- AVISO RÁPIDO (toast) no canto da tela -->
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<!-- Código do app. A ordem importa: cada arquivo usa o que vem antes dele; main.js é sempre o último. -->
-<script src="utils.js"></script>
-<script src="config.js"></script>
-<script src="theme.js"></script>
-<script src="calculations.js"></script>
-<script src="storage.js"></script>
-<script src="ui.js"></script>
-<script src="dashboard.js"></script>
-<script src="sheet-drag.js"></script>
-<script src="transactions.js"></script>
-<script src="cadastros.js"></script>
-<script src="importer.js"></script>
-<script src="backup.js"></script>
-<script src="recorrentes.js"></script>
-<script src="graficos.js"></script>
-<script src="exportar.js"></script>
-<script src="demo.js"></script>
-<script src="bloqueio.js"></script>
-<script src="integridade.js"></script>
-<script src="main.js"></script>
+<!-- Scripts do app, em ordem de carregamento (não mude a ordem; 07-inicio.js é sempre o último). Arquivo novo: inclua aqui e na lista FILES do sw.js. -->
+<script src="01-base.js"></script>
+<script src="02-resumo.js"></script>
+<script src="03-lancamentos.js"></script>
+<script src="04-formulario.js"></script>
+<script src="05-cadastros.js"></script>
+<script src="06-extras.js"></script>
+<script src="07-inicio.js"></script>
 <!-- Registra o service worker (permite instalar o app no celular e abrir sem internet) -->
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>
 </body>
