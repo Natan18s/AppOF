@@ -56,7 +56,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 4. **Arquivo novo** de código: inclua no `index.html` (na ordem certa; `07-inicio.js` continua por último) e na lista `FILES` do `sw.js`. O `estrutura.test.js` avisa se esquecer o `sw.js`.
 5. **Scripts clássicos e globais** (o HTML usa `onclick="..."`): sem módulos; **não repita** nomes de `const`/`let`/`function` entre arquivos.
 6. **Dados:** formato novo exige migração em `loadData`/`normalizeTransaction` (seção `storage.js`). Campo novo em `data`: inclua em `defaultData` (seção `config.js`), em `loadData` e em `applyBackup` (seção `backup.js`, copia campo a campo), senão some ao restaurar backup.
-7. **Sem `confirm()`/`alert()`** do navegador: use `askConfirm()`/`askAlert()` (seção `ui.js`).
+7. **Sem `confirm()`/`alert()`** do navegador: use `askConfirm()`/`askAlert()` (seção `ui.js`). Também sem a lista nativa do `<select>`: o app abre a própria (`openSelectSheet`, seção `ui.js`); o CSS desliga o toque direto no `<select>` (`pointer-events:none`) e o toque é achado pela posição. Campo de escolha novo funciona sozinho, sem código extra.
 8. **Comentários** em português, curtos, só sobre o que o bloco faz.
 9. **Nunca** peça ao usuário para "limpar dados do site" (apaga os dados dele). Para atualizar: fechar e reabrir o app.
 10. **Teste antes de entregar:** `node --test` (Node 18+, sem instalar nada) e, se possível, abra no navegador em 360–420 px e confira o console sem erros. Ao mudar uma regra de cálculo, atualize/crie o teste. O GitHub roda os testes a cada envio (✔/✖ em Actions).
@@ -112,7 +112,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 
 **Tutorial**: explica cada tela; mostra os mesmos atalhos de boas-vindas (registrar gasto/entrada, ver demonstração).
 
-**Geral**: instala no celular (PWA) e funciona sem internet; tema claro/escuro (padrão claro); cartão de boas-vindas quando o app está vazio; botão voltar do celular fecha painéis e caixas de confirmação antes de trocar de aba; caixas de confirmação próprias do app (nunca as do navegador).
+**Geral**: instala no celular (PWA) e funciona sem internet; tema claro/escuro (padrão claro); cartão de boas-vindas quando o app está vazio; botão voltar do celular fecha painéis e caixas de confirmação antes de trocar de aba; caixas de confirmação próprias do app (nunca as do navegador); listas de escolha (`<select>`) abrem numa lista própria colada embaixo da tela (a lista nativa do celular saía da tela).
 
 ## 7. Formato dos dados (localStorage, chave `meu-controle-v2`)
 ```
