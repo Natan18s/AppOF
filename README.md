@@ -10,7 +10,7 @@ Este é o **único documento do projeto**: contexto e regras de trabalho (partes
 - Os dados são de uma pessoa real: nunca perca nem altere dados salvos sem migração.
 
 ## 2. Estado atual
-- Versão do app: **v29** (selo `#appVersion` no cabeçalho do `index.html`; sobe 1 a cada alteração).
+- Versão do app: veja o selo `#appVersion` no cabeçalho do `index.html` (sobe 1 a cada alteração; não anote o número aqui).
 - Sem servidor: tudo roda no aparelho. Um **site com servidor** (login, assinatura Pro, sincronização na nuvem, painel admin) foi construído e testado, mas ficou **arquivado fora deste repositório** porque exige servidor com disco (não é gratuito). Só retome se o usuário pedir e aceitar o custo.
 - Sem pendências conhecidas. Textos legais (Termos/Privacidade) ficam para depois, se um dia houver site público com contas.
 
@@ -76,7 +76,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 5. Correção da importação (sinal de gasto x entrada pela maioria das linhas, separador `;` do CSV, tipo por linha, correção de importações antigas) e prévia no celular.
 6. Versão passou a ser um selo visível no cabeçalho do HTML; service worker passou a revalidar sempre.
 7. Scripts e estilos foram agrupados em um `app.js` e um `app.css`.
-8. **v29:** `README.md`, `agenteof.md` e `regrasof.md` viraram um só `README.md`; o `app.js` (2.671 linhas) foi dividido em 7 arquivos de até 500 linhas (mesma ordem e mesmas seções); testes de versão e de caminhos viraram `estrutura.test.js`; removidos o arquivo vazio `download`, o `icon-maskable-512.png` e 3 funções sem uso (`transactionGross`, `splitTotal`, `reimbursedAmount`).
+8. **v29 (reorganização):** `README.md`, `agenteof.md` e `regrasof.md` viraram um só `README.md`; o `app.js` (2.671 linhas) foi dividido em 7 arquivos de até 500 linhas (mesma ordem e mesmas seções); testes de versão e de caminhos viraram `estrutura.test.js`; removidos o arquivo vazio `download`, o `icon-maskable-512.png` e 3 funções sem uso (`transactionGross`, `splitTotal`, `reimbursedAmount`).
 
 ## 6. Funcionalidades
 
