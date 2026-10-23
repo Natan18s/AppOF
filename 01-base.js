@@ -139,7 +139,7 @@ function currentTheme(){ return document.documentElement.dataset.theme==="dark"?
 function applyTheme(t,persist){
   document.documentElement.dataset.theme=t;
   if(persist){ try{localStorage.setItem(THEME_KEY,t)}catch{} }
-  const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.content=t==="dark"?"#0a101d":"#14275f";
+  const meta=document.querySelector('meta[name="theme-color"]'); if(meta) meta.content=t==="dark"?"#000000":"#f2f2f7";
   $("themeIcon").textContent=t==="dark"?"☀️":"🌙";
   $("themeLabel").textContent=t==="dark"?"Claro":"Escuro";
   const b=$("themeToggle"), txt=t==="dark"?"Mudar para o modo claro":"Mudar para o modo escuro";

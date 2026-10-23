@@ -66,6 +66,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 - Nada de serviço pago; sincronização entre aparelhos não existe (usar Importar > backup).
 - Valores continuam em reais com 2 casas (sem migrar para centavos inteiros).
 - O PIN é só barreira de uso (sem criptografia dos dados).
+- **Design (v32), estilo Apple:** cores do sistema iOS (azul `#007aff`, fundo cinza agrupado, cartões brancos; escuro = preto puro), fonte do sistema (`-apple-system`/Roboto), título grande, campos cinza arredondados, abas como controle segmentado no computador e **barra inferior translúcida no celular**, painéis como folhas que sobem de baixo, alertas centrais com botões divididos por linha fina. Todas as cores ficam nas variáveis do início do `app.css`; ícones das abas são SVG de traço (`currentColor`), não emoji. Mantenha esse visual em telas novas.
 - Limite de 500 linhas por arquivo e o menor número de arquivos possível.
 
 **Histórico resumido**
@@ -77,6 +78,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 6. Versão passou a ser um selo visível no cabeçalho do HTML; service worker passou a revalidar sempre.
 7. Scripts e estilos foram agrupados em um `app.js` e um `app.css`.
 8. **v29 (reorganização):** `README.md`, `agenteof.md` e `regrasof.md` viraram um só `README.md`; o `app.js` (2.671 linhas) foi dividido em 7 arquivos de até 500 linhas (mesma ordem e mesmas seções); testes de versão e de caminhos viraram `estrutura.test.js`; removidos o arquivo vazio `download`, o `icon-maskable-512.png` e 3 funções sem uso (`transactionGross`, `splitTotal`, `reimbursedAmount`).
+9. **v32:** redesenho visual no estilo Apple (só estilo; funcionalidades iguais). Ícone do app no cabeçalho, ícones SVG nas abas, cores da barra do navegador e `manifest.json` atualizados.
 
 ## 6. Funcionalidades
 

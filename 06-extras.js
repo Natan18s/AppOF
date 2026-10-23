@@ -229,7 +229,7 @@ async function deleteRecurring(id){
 // ====================================================================
 
 // Cores das fatias da rosca (funcionam nos dois temas).
-const CHART_COLORS=["#3b6cf6","#f59e0b","#10b981","#ef4444","#8b5cf6","#06b6d4","#ec4899","#94a3b8"];
+const CHART_COLORS=["#007aff","#ff9500","#34c759","#ff3b30","#af52de","#5ac8fa","#ff2d55","#8e8e93"];   // cores do sistema da Apple
 let trendMonthOffset=0;
 
 function shiftTrendWindow(offset){trendMonthOffset+=offset;renderTrendChart()}

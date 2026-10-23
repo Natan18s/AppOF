@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#14275f">
+<meta name="theme-color" content="#f2f2f7">
 <title>Meu Controle Financeiro</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -12,7 +12,7 @@
 <!-- Se houver PIN ativado, marca o app como bloqueado ANTES de a página aparecer (seção bloqueio.js (arquivo 07-inicio.js) cuida do resto). -->
 <script>try{if(JSON.parse(localStorage.getItem("meu-controle-lock")||"null").hash)document.documentElement.classList.add("locked")}catch(e){}</script>
 <!-- Aplica o tema salvo ANTES de a página aparecer (evita piscar). Padrão: modo claro. -->
-<script>(function(){try{var t=localStorage.getItem("meu-controle-theme");if(t!=="dark")t="light";document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#0a101d":"#14275f"}catch(e){}})()</script>
+<script>(function(){try{var t=localStorage.getItem("meu-controle-theme");if(t!=="dark")t="light";document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#000000":"#f2f2f7"}catch(e){}})()</script>
 </head>
 <body>
 <!-- TELA DE BLOQUEIO: só aparece quando o PIN está ativado e o app está bloqueado (seção bloqueio.js (arquivo 07-inicio.js)) -->
@@ -31,7 +31,7 @@
 <header class="app-header">
   <div class="topbar">
     <div>
-      <div class="brand">💰 Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" style="font-size:11px;font-weight:700;letter-spacing:0;margin-left:6px;padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.18);vertical-align:middle">v31</span></div>
+      <div class="brand"><img class="brand-ico" src="icon-192.png" alt="" width="30" height="30">Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" class="ver">v32</span></div>
       <div class="subtitle">Finanças, cartões, parcelas e reembolsos em um só lugar</div>
     </div>
     <div class="top-actions">
@@ -49,12 +49,12 @@
 <main class="container">
   <!-- ABAS de navegação -->
   <nav class="tabs" aria-label="Navegação">
-    <button class="tab active" data-tab="dashboard"><span class="tab-ico">📊</span>Resumo</button>
-    <button class="tab" data-tab="transactions"><span class="tab-ico">🧾</span>Lançamentos</button>
-    <button class="tab" data-tab="cards"><span class="tab-ico">💳</span>Cartões</button>
-    <button class="tab" data-tab="rules"><span class="tab-ico">⚙️</span>Regras</button>
-    <button class="tab" data-tab="import"><span class="tab-ico">📥</span>Importar</button>
-    <button class="tab" data-tab="tutorial"><span class="tab-ico">❓</span>Tutorial</button>
+    <button class="tab active" data-tab="dashboard"><span class="tab-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></span>Resumo</button>
+    <button class="tab" data-tab="transactions"><span class="tab-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg></span>Lançamentos</button>
+    <button class="tab" data-tab="cards"><span class="tab-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/></svg></span>Cartões</button>
+    <button class="tab" data-tab="rules"><span class="tab-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></span>Regras</button>
+    <button class="tab" data-tab="import"><span class="tab-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10M8 10.5l4 4 4-4M5 15v2a2 2 0 002 2h10a2 2 0 002-2v-2"/></svg></span>Importar</button>
+    <button class="tab" data-tab="tutorial"><span class="tab-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.5a2.5 2.5 0 114 2c-.9.6-1.6 1.1-1.6 2.2M12 17h.01"/></svg></span>Tutorial</button>
   </nav>
 
   <!-- ===== ABA RESUMO ===== -->
