@@ -1,7 +1,7 @@
 /* ===== transaction-form.js ===== */
 // ====================================================================
 // transaction-form.js — formulário de gasto/entrada
-// Formulário com divisão por pessoa e parcelas, salvar/editar/excluir lançamento, desfazer e reembolsos.
+// Formulário com divisão por pessoa, salvar/editar/excluir lançamento, desfazer e reembolsos. Parcelas = "Repetir esta despesa mensalmente".
 // ====================================================================
 
 // "Para onde foi" um gasto: categorias, forma/cartão, pagamento previsto e pessoas envolvidas
@@ -31,24 +31,17 @@ function transactionForm(t=null,type="expense"){
   const lock=t?'data-lock="1" disabled':"";
   return `<form id="txForm"><div class="form-grid">
     <div><label>Data da compra / lançamento</label><input name="date" id="txDate" type="date" value="${t?.date||defaultEntryDate()}" required></div>
-    <div><label id="txValueLabel">Valor total</label><input name="value" id="txValue" type="number" min="0" step="0.01" value="${t?.value??""}" required><div class="field-note" id="valueNote"></div></div>
+    <div><label>${t?.installments>1?"Valor desta parcela":"Valor total"}</label><input name="value" id="txValue" type="number" min="0" step="0.01" value="${t?.value??""}" required></div>
     <div class="full"><label>Descrição</label><input name="description" id="txDescription" value="${esc(t?.description||"")}" placeholder="Ex.: Mercado, Uber, conta de luz..." required></div>
     ${isExpense?`
       <div><label>Forma de pagamento</label><select name="method" id="txMethod">${Object.entries(METHODS).map(([k,v])=>`<option value="${k}" ${k===method?"selected":""}>${v}</option>`).join("")}</select></div>
       <div id="grpCard"><label>Cartão</label><select name="cardId" id="txCard"><option value="">Selecione o cartão</option>${data.cards.map(c=>`<option value="${c.id}" ${t?.cardId===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
-      <div id="grpPay"><label>Pagamento previsto</label><input name="paymentDate" id="txPaymentDate" type="date" value="${t?.paymentDate||""}"><div class="row-actions" style="margin-top:5px"><button type="button" class="btn ghost" id="useCardDue">Usar vencimento pelo fechamento</button></div></div>
       <div id="grpStatus"><label>Status do pagamento</label><select name="paymentStatus" id="txStatus"><option value="planned" ${status!=="paid"?"selected":""}>Previsto / ainda não pago</option><option value="paid" ${status==="paid"?"selected":""}>Já pago</option></select><div class="field-note">Pix, débito e dinheiro começam como "Já pago"; mude para "Previsto" se for uma despesa futura.</div></div>
-      <div id="grpInst" class="full form-grid">
-        <div><label>Total de parcelas</label><input name="installments" id="txInstallments" type="number" step="1" value="${t?.installments>1?t.installments:""}" placeholder="Ex.: 10" ${lock}></div>
-        <div><label>Parcela inicial (restantes)</label><input name="startInstallment" id="txStart" type="number" step="1" value="${t?.installmentNo||1}" ${lock}><div class="field-note">1 = compra nova. Se já pagou 3 parcelas, use 4: só as restantes serão lançadas.</div></div>
-        <div><label>Mês da 1ª parcela lançada</label><input name="firstMonth" id="txFirstMonth" type="month" value="${t?.date?.slice(0,7)||month}" ${lock}></div>
-        <div class="full"><div class="install-preview" id="installPreview"></div></div>
-      </div>
     `:`
       <div><label>Origem</label><select name="incomeSource"><option value="normal" ${t?.source!=="reimbursement"?"selected":""}>Entrada normal</option><option value="reimbursement" ${t?.source==="reimbursement"?"selected":""}>Reembolso recebido</option></select></div>
     `}</div>
     ${!t?`<div class="full recurring-card-wrap" id="grpRecurring">
-      <label class="recurring-card" for="txRecurring"><input type="checkbox" id="txRecurring" name="recurring"><span><b>Repetir esta ${isExpense?"despesa":"entrada"} mensalmente</b><small>Cria um lançamento por mês durante o período escolhido.</small></span></label>
+      <label class="recurring-card" for="txRecurring"><input type="checkbox" id="txRecurring" name="recurring"><span><b>Repetir esta ${isExpense?"despesa":"entrada"} mensalmente</b><small>${isExpense?"Registra suas parcelas e cria um lançamento por mês durante o período escolhido.":"Cria um lançamento por mês durante o período escolhido."}</small></span></label>
       <div class="form-grid recurring-dates hidden" id="recurringDates">
         <div><label>De</label><input name="recurringStartDate" id="recurringStartDate" type="date" value="${t?.date||defaultEntryDate()}"></div>
         <div><label>Até (opcional)</label><input name="recurringEndDate" id="recurringEndDate" type="date"><div class="field-note">Deixe vazio para manter a recorrência em até 6 meses.</div></div>
@@ -68,7 +61,7 @@ function splitStatusCell(ownerId,reimbursed){
 // Todo campo tem um cabeçalho (.fld-head) de mesma altura; Categoria e Quem paga? ganham o atalho de criar na hora (.mini-create ocupa o lugar do select).
 function splitRow(s,i,categories,people){
   return `<div class="split" data-index="${i}">
-    <div class="category"><div class="fld-head"><label>Categoria</label><button type="button" class="mini-link new-cat">+ Criar categoria</button></div><div class="mini-create hidden"><input class="mini-input" type="text" maxlength="40" placeholder="Nome da categoria" aria-label="Nome da nova categoria"><button type="button" class="btn primary mini-ok" title="Salvar">✓</button><button type="button" class="btn mini-cancel" title="Cancelar">✕</button></div><select class="split-category" aria-label="Categoria">${categories.map(c=>`<option ${c===s.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+    <div class="category"><div class="fld-head"><label>Categoria</label><button type="button" class="mini-link new-cat">+ Criar categoria</button></div><div class="mini-create hidden"><input class="mini-input" type="text" maxlength="40" placeholder="Nome da categoria" aria-label="Nome da nova categoria"><button type="button" class="btn primary mini-ok" title="Salvar">✓</button><button type="button" class="btn mini-cancel" title="Cancelar">✕</button></div><select class="split-category" aria-label="Categoria">${categoriesOutrosLast(categories).map(c=>`<option ${c===s.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
     <div><div class="fld-head"><label>Valor</label></div><input class="split-amount" aria-label="Valor desta parte" type="number" min="0" step="0.01" value="${Number(s.amount||0)}"></div>
     <div class="owner"><div class="fld-head"><label>Quem paga?</label><button type="button" class="mini-link new-person">+ Criar pessoa</button></div><div class="mini-create hidden"><input class="mini-input" type="text" maxlength="40" placeholder="Nome da pessoa" aria-label="Nome da nova pessoa"><button type="button" class="btn primary mini-ok" title="Salvar">✓</button><button type="button" class="btn mini-cancel" title="Cancelar">✕</button></div><select class="split-owner" aria-label="Quem paga">${people.map(p=>`<option value="${p.id}" ${s.ownerId===p.id?"selected":""}>${esc(p.name)}</option>`).join("")}</select></div>
     <div class="person">${splitStatusCell(s.ownerId,s.reimbursed)}</div>
@@ -84,23 +77,7 @@ function distributeEqual(){
   updateSplitTotal();
 }
 
-// Prévia das parcelas no formulário: quantas serão lançadas, o mês, a data de pagamento e o valor de cada uma.
-function renderInstallPreview(){
-  const box=$("installPreview"); if(!box)return;
-  if($("txMethod").value!=="installment"||$("txInstallments").disabled){box.textContent="";return}
-  const n=Number($("txInstallments").value||0),start=Number($("txStart").value||1),total=Number($("txValue").value||0),fm=$("txFirstMonth").value,day=$("txDate").value.slice(8,10)||"01",pay=$("txPaymentDate").value;
-  if(!(n>=2&&n<=48)||!(start>=1&&start<=n)||!fm||!total){box.textContent="Informe o valor e o total de parcelas para ver como ficarão os lançamentos.";return}
-  const base=Math.floor(Math.round(total*100)/n), rows=[]; let sum=0;
-  for(let k=start;k<=n;k++){
-    const cents=k===n?Math.round(total*100)-base*(n-1):base; sum+=cents;
-    const d=shiftMonthDate(fm,day,k-start), pd=pay?shiftMonthDate(pay.slice(0,7),pay.slice(8,10),k-start):"";
-    rows.push(`<div class="inst-row"><span class="inst-no">${k}/${n}</span><span class="inst-when"><b>${MONTHS_PT[Number(d.slice(5,7))-1]}/${d.slice(0,4)}</b>${pd?`<small>paga em ${fmtDate(pd)}</small>`:""}</span><span class="inst-val">${fmtMoney(cents/100)}</span></div>`);
-  }
-  const count=n-start+1, first=shiftMonthDate(fm,day,0);
-  box.innerHTML=`<div class="inst-box"><div class="inst-head"><div><b>${count} parcela${count>1?"s":""} ser${count>1?"ão":"á"} lançada${count>1?"s":""}</b><small>Uma por mês, começando em ${MONTHS_PT[Number(first.slice(5,7))-1]}/${first.slice(0,4)}</small></div><div class="inst-total"><small>Total lançado</small><b>${fmtMoney(sum/100)}</b></div></div><div class="inst-cols"><span>Parcela</span><span>Mês do lançamento</span><span>Valor</span></div><div class="inst-list">${rows.join("")}</div></div>`;
-}
-
-// Abre o formulário de gasto/entrada e liga todos os comportamentos automáticos (vencimento, status, divisão, parcelas).
+// Abre o formulário de gasto/entrada e liga os comportamentos automáticos (cartão, status, divisão). Recorrência ao fim de cada bloco.
 function syncRecurringDateFields(){
   if(!$("txRecurring"))return;
   const enabled=$("txRecurring").checked;
@@ -111,36 +88,19 @@ function syncRecurringDateFields(){
 function openTransactionModal(type="expense",tx=null){
   openModal(tx?(type==="expense"?"Editar gasto":"Editar entrada"):(type==="expense"?"Novo gasto":"Nova entrada"),transactionForm(tx,type));
   let recurringStartTouched=false;
-  // Gasto: liga os comportamentos automáticos do formulário (forma de pagamento, vencimento, status, divisão e parcelas)
+  // Gasto: liga os comportamentos automáticos do formulário (forma de pagamento, status e divisão)
   if(type==="expense"){
     const list=$("splitList");
-    autoSplit=!tx; payTouched=!!tx; firstMonthTouched=!!tx; statusTouched=!!tx;
+    autoSplit=!tx; statusTouched=!!tx;
     // show(): mostra ou esconde um grupo de campos (e desativa os inputs dele quando escondido)
     const show=(id,on)=>{const g=$(id);g.classList.toggle("hidden",!on);g.querySelectorAll("input,select").forEach(i=>{i.disabled=!on||i.dataset.lock==="1"})};
-    // autoPaymentDate(): sugere o vencimento (dia de vencimento do cartão, no mês seguinte à compra)
-    const autoPaymentDate=()=>{$("txPaymentDate").value=nextMonthPaymentDate($("txCard").value,$("txDate").value)};
-    // Regra 2: pagamento em mês diferente da compra => status "Previsto" e parcelamento acompanha o mês do pagamento
-    const syncPaymentRules=()=>{
-      const d=$("txDate").value,p=$("txPaymentDate").value;
-      if(isCreditMethod($("txMethod").value)&&d&&p&&d.slice(0,7)!==p.slice(0,7)){
-        $("txStatus").value="planned";
-        if($("txMethod").value==="installment"&&!firstMonthTouched&&!tx)$("txFirstMonth").value=p.slice(0,7);
-      }
-    };
-    // refreshMethod(): ao trocar a forma de pagamento, mostra/esconde cartão, vencimento e parcelas e ajusta o status padrão
+    // refreshMethod(): ao trocar a forma de pagamento, mostra/esconde o cartão e ajusta o status padrão.
+    // Crédito não pede data de vencimento: o app calcula pelo fechamento do cartão ao salvar.
     const refreshMethod=()=>{
-      const m=$("txMethod").value,credit=isCreditMethod(m),inst=m==="installment";
-      show("grpCard",credit);show("grpPay",credit);show("grpInst",inst);   // Pix/Débito/Dinheiro: cartão, vencimento e parcelas somem (não são validados); o status continua editável
-      if($("grpRecurring")){
-        if(inst) $("txRecurring").checked=false;
-        show("grpRecurring",!inst);
-        syncRecurringDateFields();
-      }
+      const credit=isCreditMethod($("txMethod").value);
+      show("grpCard",credit);   // Pix/Dinheiro/Débito: o cartão some (não é validado); o status continua editável
       if(!statusTouched)$("txStatus").value=credit?"planned":"paid";   // padrão automático, mas o usuário pode mudar
-      $("txValueLabel").textContent=tx&&tx.installments>1?"Valor desta parcela":(inst&&!tx?"Valor total da compra":"Valor total");
-      $("valueNote").textContent=inst&&!tx?"Será dividido pelo total de parcelas.":"";
-      if(credit){if(!$("txCard").value&&data.cards.length===1)$("txCard").value=data.cards[0].id;if(!tx&&!payTouched)autoPaymentDate();syncPaymentRules()}
-      renderInstallPreview();
+      if(credit&&!$("txCard").value&&data.cards.length===1)$("txCard").value=data.cards[0].id;
     };
     // addPerson(): adiciona uma pessoa à divisão do gasto e redistribui o valor
     const addPerson=()=>{
@@ -152,23 +112,13 @@ function openTransactionModal(type="expense",tx=null){
       autoSplit=true;distributeEqual();   // recalcula o valor entre todas as pessoas
       if(data.people.length<2)toast("Use \"Criar pessoa\" (acima de Quem paga?) para cadastrar quem divide o gasto.");
     };
-    // Ligações dos botões e campos do formulário (cada alteração recalcula a prévia de parcelas e a divisão)
+    // Ligações dos botões e campos do formulário (cada alteração recalcula a divisão)
     $("addSplit").onclick=addPerson;
     $("splitEqual").onclick=()=>{autoSplit=true;distributeEqual()};
     [...list.children].forEach(bindSplitRow);
     $("txMethod").addEventListener("change",refreshMethod);
     $("txStatus").addEventListener("change",()=>{statusTouched=true});
-    $("txCard").addEventListener("change",()=>{if(!tx&&!payTouched)autoPaymentDate();syncPaymentRules();renderInstallPreview()});
-    $("txDate").addEventListener("change",()=>{
-      if(!tx&&!payTouched&&isCreditMethod($("txMethod").value))autoPaymentDate();
-      syncPaymentRules();renderInstallPreview();
-    });
-    $("txPaymentDate").addEventListener("input",()=>{payTouched=true;syncPaymentRules();renderInstallPreview()});
-    $("txFirstMonth").addEventListener("input",()=>{firstMonthTouched=true;renderInstallPreview()});
-    $("txInstallments").addEventListener("input",renderInstallPreview);
-    $("txStart").addEventListener("input",renderInstallPreview);
-    $("txValue").addEventListener("input",()=>{if(autoSplit)distributeEqual();else updateSplitTotal();renderInstallPreview()});
-    $("useCardDue").onclick=()=>{$("txPaymentDate").value=$("txCard").value?nextCardPaymentDate($("txCard").value,$("txDate").value):$("txDate").value;payTouched=true;syncPaymentRules();renderInstallPreview()};
+    $("txValue").addEventListener("input",()=>{if(autoSplit)distributeEqual();else updateSplitTotal()});
     $("txDescription").addEventListener("input",e=>{if(!tx){const first=$("splitList").querySelector(".split-category");if(first&&first.value==="Outros")first.value=applyRule(e.target.value)}});
     if(autoSplit)distributeEqual();
     refreshMethod();updateSplitTotal();
@@ -218,7 +168,7 @@ function createCategoryInline(name,sel){
   const finalName=found||name;
   if(!found){data.categories.push(name);save()}   // save() redesenha as abas de trás; o formulário aberto não é afetado
   document.querySelectorAll("#splitList .split-category").forEach(s=>{
-    if(![...s.options].some(o=>o.value===finalName)){const o=document.createElement("option");o.value=o.textContent=finalName;s.appendChild(o)}
+    if(![...s.options].some(o=>o.value===finalName)){const o=document.createElement("option");o.value=o.textContent=finalName;const outros=[...s.options].find(x=>x.value==="Outros");s.insertBefore(o,outros||null)}   // "Outros" continua por último
   });
   sel.value=finalName;
   toast(found?"Essa categoria já existia: selecionada.":"Categoria criada");
@@ -249,16 +199,7 @@ function updateSplitTotal(){if(!$("splitList"))return;const total=[...document.q
 // Lê as linhas da divisão do formulário e devolve a lista de partes.
 function collectSplits(){return [...document.querySelectorAll("#splitList .split")].map(row=>({id:uid(),category:row.querySelector(".split-category").value,amount:Number(row.querySelector(".split-amount").value||0),ownerId:row.querySelector(".split-owner").value,reimbursed:row.querySelector(".split-owner").value==="self"?false:row.querySelector(".split-status")?.value==="received"}));}
 
-// Ajusta as partes proporcionalmente ao valor de cada parcela, fechando os centavos na última.
-function scaleSplits(splits,part,total){
-  let acc=0;
-  return splits.map((s,i)=>{
-    const amt=i===splits.length-1?Math.round((part-acc)*100)/100:Math.round(Number(s.amount)*part/total*100)/100;
-    acc+=amt;return {...s,id:uid(),amount:amt};
-  });
-}
-
-// Valida e salva o gasto do formulário (novo, edição, ou todas as parcelas de uma compra parcelada).
+// Valida e salva o gasto do formulário (novo, edição ou recorrente).
 function saveExpenseFromForm(existingId){
   const f=new FormData($("txForm")),value=Number(f.get("value")||0),splits=collectSplits(),sum=splits.reduce((s,x)=>s+x.amount,0);
   const method=f.get("method")||"pix",credit=isCreditMethod(method),date=f.get("date");
@@ -272,14 +213,14 @@ function saveExpenseFromForm(existingId){
     if(endDate&&endDate<startDate){askAlert("A data final não pode ser antes da data inicial.");return}
     if(splits.length!==1||splits[0].ownerId!=="self"||Math.abs(splits[0].amount-value)>0.005){askAlert("Para repetir, o gasto precisa ter uma única divisão atribuída a Você.");return}
   }
-  let n=1,start=1;
-  if(method==="installment"&&!existingId){
-    n=Number(f.get("installments")||0);start=Number(f.get("startInstallment")||1);
-    if(!(n>=2&&n<=48)){askAlert("Informe o total de parcelas (de 2 a 48).");return}
-    if(!(start>=1&&start<=n)){askAlert("A parcela inicial deve estar entre 1 e o total de parcelas.");return}
+  // Vencimento do crédito: calculado pelo fechamento do cartão. Na edição, se a data da compra e o cartão não mudaram, mantém o vencimento já gravado.
+  let paymentDate=date;
+  if(credit){
+    const old=existingId?data.transactions.find(t=>t.id===existingId):null;
+    paymentDate=(old&&old.cardId===f.get("cardId")&&old.date===date&&old.paymentDate)?old.paymentDate:nextCardPaymentDate(f.get("cardId"),date);
   }
-  // Pix/Débito/Dinheiro: campos de cartão/parcelas ficam de fora; pagamento = data da compra, já pago
-  const base={date,description:f.get("description"),value,method,cardId:credit?f.get("cardId"):"",paymentDate:credit?(f.get("paymentDate")||date):date,paymentStatus:f.get("paymentStatus")||(credit?"planned":"paid"),type:"expense",splits};   // sem "notes": o formulário não tem mais Observação (a antiga é preservada na edição)
+  // Pix/Débito/Dinheiro: o campo de cartão fica de fora; pagamento = data da compra
+  const base={date,description:f.get("description"),value,method,cardId:credit?f.get("cardId"):"",paymentDate,paymentStatus:f.get("paymentStatus")||(credit?"planned":"paid"),type:"expense",splits};   // sem "notes": o formulário não tem mais Observação (a antiga é preservada na edição)
   if(existingId){
     const old=data.transactions.find(t=>t.id===existingId);
     const updated={...old,...base};
@@ -294,17 +235,6 @@ function saveExpenseFromForm(existingId){
     const rangeLabel=endDate?`até ${fmtDate(endDate)}`:"em diante";
     logActivity("create",`Gasto recorrente: ${base.description}`,`${fmtMoney(value)} · de ${fmtDate(startDate)} ${rangeLabel}`);
     toast(count?`Recorrência salva · ${count} lançamento(s) criado(s)`:"Recorrência salva");
-  }else if(method==="installment"){
-    const rem=n-start+1,totalCents=Math.round(value*100),per=Math.floor(totalCents/n),first=f.get("firstMonth")||date.slice(0,7),day=date.slice(8,10),pay=base.paymentDate;
-    const created=[];
-    for(let i=0;i<rem;i++){
-      const k=start+i,cents=k===n?totalCents-per*(n-1):per;
-      const installment={...base,id:uid(),createdAt:Date.now()+i,value:cents/100,splits:scaleSplits(splits,cents/100,value),date:shiftMonthDate(first,day,i),paymentDate:shiftMonthDate(pay.slice(0,7),pay.slice(8,10),i),paymentStatus:i===0?base.paymentStatus:"planned",installments:n,installmentNo:k};
-      created.push(installment);data.transactions.push(installment);
-    }
-    const firstTx=created[0];
-    logActivity("create",`Gasto parcelado: ${base.description}`,`${n}x · lançadas ${rem} (${start}/${n} a ${n}/${n}) · total ${fmtMoney(value)} · ${expenseDestination(firstTx)}`,firstTx.id,{changes:created.map(t=>({before:null,after:structuredClone(t)}))});
-    toast(`${rem} parcela(s) lançada(s)`);
   }else{
     const nt={...base,id:uid(),createdAt:Date.now(),installments:1,installmentNo:1};
     data.transactions.push(nt);

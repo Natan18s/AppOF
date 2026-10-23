@@ -115,7 +115,6 @@ function openSelectSheet(sel){
   };
   document.body.appendChild(selSheet);
   history.pushState({tab:currentTab,sheet:true},"");   // o botão voltar do celular vai fechar só esta lista
-  selSheet.querySelector(".on")?.scrollIntoView({block:"center"});
 }
 
 // Toque num <select> visível (do painel aberto ou da tela) abre a lista própria. O toque é achado pela posição, pois o CSS desliga o toque no <select>.

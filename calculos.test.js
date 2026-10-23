@@ -101,10 +101,22 @@ test("divisão do gasto: parte sua e parte a receber", () => {
   assert.equal(run('ownAmount(data.transactions[3])'), 0);   // entrada não conta como gasto
 });
 
-test("crédito: vence no mês seguinte, no dia de vencimento do cartão", () => {
+test("crédito: o vencimento é calculado pelo fechamento do cartão", () => {
   const { run } = novoAmbiente(); run(DADOS);
-  assert.equal(run('nextMonthPaymentDate("c1","2026-10-09")'), "2026-11-19");
-  assert.equal(run('nextMonthPaymentDate("c1","2026-12-20")'), "2027-01-19");
+  assert.equal(run('nextCardPaymentDate("c1","2026-10-09")'), "2026-10-19");   // antes do fechamento (dia 10): vence neste mês
+  assert.equal(run('nextCardPaymentDate("c1","2026-10-10")'), "2026-11-19");   // no fechamento ou depois: fatura do mês seguinte
+  assert.equal(run('nextCardPaymentDate("c1","2026-12-20")'), "2027-01-19");
+  run('data.cards.push({id:"c2",name:"Outro",limit:1000,closing:25,due:5})');  // vencimento (dia 5) depois do fechamento (dia 25)
+  assert.equal(run('nextCardPaymentDate("c2","2026-10-10")'), "2026-11-05");
+  assert.equal(run('nextCardPaymentDate("c2","2026-10-28")'), "2026-12-05");
+});
+
+test("a forma \"Parcelado\" foi retirada: lançamento antigo vira Crédito e mantém parcela e vencimento", () => {
+  const { run } = novoAmbiente(); run(DADOS);
+  const t = JSON.parse(run('JSON.stringify(normalizeTransaction({id:"p1",type:"expense",date:"2026-10-05",description:"Celular",value:200,method:"installment",cardId:"c1",paymentDate:"2026-11-19",paymentStatus:"planned",installments:6,installmentNo:2,splits:[]}))'));
+  assert.equal(t.method, "credit"); assert.equal(t.installments, 6); assert.equal(t.installmentNo, 2); assert.equal(t.paymentDate, "2026-11-19");
+  assert.deepEqual(Object.keys(JSON.parse(run("JSON.stringify(METHODS)"))), ["pix", "cash", "debit", "credit"]);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(categoriesOutrosLast(["Casa","Outros","Lazer"]))')), ["Casa", "Lazer", "Outros"]);
 });
 
 test("o Resumo usa a data de PAGAMENTO, não a da compra", () => {

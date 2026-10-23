@@ -158,10 +158,23 @@ function toggleSelectAll(e){
   updateBulkBar();
 }
 
-// Mostra ou esconde a barra de ações em massa conforme há lançamentos selecionados.
+// Botão "Selecionar todos": marca (ou, se já estão todos marcados, desmarca) todos os lançamentos que aparecem na lista.
+function selectAllVisible(){
+  const checks=[...document.querySelectorAll(".tx-check")];
+  if(!checks.length)return;
+  const mark=!checks.every(c=>c.checked);
+  checks.forEach(c=>{c.checked=mark;if(mark)selectedTxIds.add(c.value);else selectedTxIds.delete(c.value)});
+  updateBulkBar();
+}
+
+// Mostra ou esconde a barra de ações em massa conforme há lançamentos selecionados e atualiza os botões de "selecionar todos".
 function updateBulkBar(){
   $("selectedCount").textContent=selectedTxIds.size;
   $("bulkBar").classList.toggle("hidden",selectedTxIds.size===0);
+  const checks=[...document.querySelectorAll(".tx-check")], all=checks.length>0&&checks.every(c=>c.checked);
+  $("selectAllTx").checked=all;
+  $("selectAllBtn").classList.toggle("hidden",!checks.length);
+  $("selectAllBtn").textContent=all?"Limpar seleção":`☑ Selecionar todos (${checks.length})`;
 }
 
 // Desenha a tabela da aba Lançamentos, aplicando mês, busca e tipo. Um gasto também aparece no mês do pagamento previsto.
@@ -201,7 +214,17 @@ function openBulkPaymentModal(){
   if(!expenses.length){askAlert("Selecione pelo menos um gasto. A data de pagamento previsto só vale para gastos.");return}
   const suggested=expenses.length===1?(expenses[0].paymentDate||nextCardPaymentDate(expenses[0].cardId,expenses[0].date)):(month+"-19");
   openModal("Definir pagamento previsto",`<form id="bulkPayForm"><p>Você selecionou <b>${expenses.length}</b> gasto(s). A data abaixo será aplicada a todos.${ids.length>expenses.length?" As entradas selecionadas serão ignoradas.":""}</p><div><label>Data de pagamento</label><input name="paymentDate" type="date" value="${suggested}" required></div><div style="margin-top:10px"><label>Status</label><select name="status"><option value="planned">Pagamento previsto</option><option value="paid">Já pago</option></select></div><div class="row-actions end" style="margin-top:15px"><button type="button" class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn primary">Aplicar aos selecionados</button></div></form>`);
-  $("bulkPayForm").onsubmit=e=>{e.preventDefault();const f=new FormData(e.target),changes=expenses.map(t=>{const before=structuredClone(t);t.paymentDate=f.get("paymentDate");t.paymentStatus=f.get("status");return{before,after:structuredClone(t)}});logActivity("bulk",`Pagamento previsto definido em ${expenses.length} gasto(s)`,`Data ${fmtDate(f.get("paymentDate"))} · ${f.get("status")==="paid"?"já pago":"previsto"} · ${expenses.slice(0,3).map(t=>t.description).join(", ")}${expenses.length>3?"…":""}`,"",{changes});selectedTxIds.clear();closeModal();save();toast(`Pagamento previsto aplicado a ${expenses.length} gasto(s)`) };
+  $("bulkPayForm").onsubmit=e=>{
+    e.preventDefault();
+    const f=new FormData(e.target),date=f.get("paymentDate"),status=f.get("status");
+    if(!date){askAlert("Escolha a data de pagamento.");return}
+    // busca os gastos de novo pelo id (nunca cópias antigas) e aplica a data e o status em todos
+    const targets=ids.map(id=>data.transactions.find(t=>t.id===id)).filter(t=>t?.type==="expense");
+    const changes=targets.map(t=>{const before=structuredClone(t);t.paymentDate=date;t.paymentStatus=status;return{before,after:structuredClone(t)}});
+    logActivity("bulk",`Pagamento previsto definido em ${targets.length} gasto(s)`,`Data ${fmtDate(date)} · ${status==="paid"?"já pago":"previsto"} · ${targets.slice(0,3).map(t=>t.description).join(", ")}${targets.length>3?"…":""}`,"",{changes});
+    selectedTxIds.clear();closeModal();save();
+    toast(`${targets.length} gasto(s) agora com pagamento em ${fmtDate(date)}`);
+  };
 }
 
 // Remove a previsão de pagamento dos gastos selecionados (volta para a data da compra, como pago).

@@ -119,7 +119,7 @@ function buildRecurringTransaction(r,m,now=today()){
   const credit=isCreditMethod(r.method);
   return {
     ...base,type:"expense",method:r.method,cardId:credit?r.cardId:"",
-    paymentDate:credit?nextMonthPaymentDate(r.cardId,date):date,
+    paymentDate:credit?nextCardPaymentDate(r.cardId,date):date,
     paymentStatus:(credit||date>now)?"planned":"paid",
     splits:[{id:uid(),category:r.category,amount:value,ownerId:"self",reimbursed:false}],
     installments:1,installmentNo:1
@@ -167,7 +167,7 @@ function renderRecurring(){
 function openRecurringModal(id=null){
   const r=id?data.recurring.find(x=>x.id===id):{type:"expense",description:"",value:"",day:Number(today().slice(8,10)),startMonth:today().slice(0,7),endMonth:"",method:"pix",cardId:data.cards[0]?.id||"",category:data.categories.includes("Contas")?"Contas":data.categories[0],active:true};
   if(!r) return;
-  const methods=Object.entries(METHODS).filter(([k])=>k!=="installment");
+  const methods=Object.entries(METHODS);
   openModal(id?"Editar recorrente":"Novo lançamento recorrente",`<form id="recurringForm" class="form-grid">
     <div><label>Tipo</label><select name="type" id="recType"><option value="expense" ${r.type==="expense"?"selected":""}>Gasto</option><option value="income" ${r.type==="income"?"selected":""}>Entrada</option></select></div>
     <div><label>Valor</label><input name="value" type="number" min="0.01" step="0.01" value="${esc(r.value)}" required></div>
@@ -175,7 +175,7 @@ function openRecurringModal(id=null){
     <div><label>Dia do mês</label><input name="day" type="number" min="1" max="31" value="${esc(r.day)}" required></div>
     <div><label>Começa em</label><input name="startMonth" type="month" value="${esc(r.startMonth)}" required></div>
     <div><label>Termina em (opcional)</label><input name="endMonth" type="month" value="${esc(r.endMonth||"")}"></div>
-    <div class="rec-exp"><label>Categoria</label><select name="category">${data.categories.map(c=>`<option ${c===r.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+    <div class="rec-exp"><label>Categoria</label><select name="category">${categoriesOutrosLast(data.categories).map(c=>`<option ${c===r.category?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
     <div class="rec-exp"><label>Forma de pagamento</label><select name="method" id="recMethod">${methods.map(([k,v])=>`<option value="${k}" ${k===r.method?"selected":""}>${v}</option>`).join("")}</select></div>
     <div class="rec-card"><label>Cartão</label><select name="cardId">${data.cards.map(c=>`<option value="${esc(c.id)}" ${c.id===r.cardId?"selected":""}>${esc(c.name)}</option>`).join("")}</select></div>
     <div class="full field-note">O app cria o lançamento de cada mês sozinho, até seis meses à frente. Se você excluir um já criado, ele não volta. Mudanças valem para os meses ainda não criados.</div>
@@ -377,7 +377,7 @@ window.addEventListener("afterprint",()=>{ printOpened.forEach(d=>d.open=false);
 // Gerador de números repetível (mesma "sorte" sempre), para a demonstração ser igual a cada vez.
 function demoRandom(seed){ let x=seed; return ()=>{ x=(x*1664525+1013904223)%4294967296; return x/4294967296; }; }
 
-// Monta um conjunto completo de dados fictícios: 6 meses de entradas, gastos, parcelado, divisão com amigos, empréstimo, recorrentes e orçamentos.
+// Monta um conjunto completo de dados fictícios: 6 meses de entradas, gastos, compra em várias parcelas no crédito, divisão com amigos, empréstimo, recorrentes e orçamentos.
 function buildDemoData(now=today()){
   const prev=data;
   const d=structuredClone(defaultData);
@@ -397,7 +397,7 @@ function buildDemoData(now=today()){
     const mk=(date,description,value,category,method,extra={})=>{
       const credit=isCreditMethod(method), cardId=credit?(extra.cardId||"nubank"):"";
       const t={id:uid(),createdAt:Date.now()+d.transactions.length,type:"expense",date,description,value,method,cardId,
-        paymentDate:credit?nextMonthPaymentDate(cardId,date):date,paymentStatus:(credit||date>now)?"planned":"paid",
+        paymentDate:credit?nextCardPaymentDate(cardId,date):date,paymentStatus:(credit||date>now)?"planned":"paid",
         splits:extra.splits||[{id:uid(),category,amount:value,ownerId:"self",reimbursed:false}],installments:extra.installments||1,installmentNo:extra.installmentNo||1};
       d.transactions.push(t); return t;
     };
@@ -418,7 +418,7 @@ function buildDemoData(now=today()){
     const start=shiftMonthStr(cur,-3), per=200;
     for(let k=1;k<=6;k++){
       const date=shiftMonthDate(start,10,k-1), pay=shiftMonthDate(shiftMonthStr(start,k),19,0);
-      const t=mk(date,"Celular novo",per,"Compras","installment",{installments:6,installmentNo:k});
+      const t=mk(date,"Celular novo",per,"Compras","credit",{installments:6,installmentNo:k});
       t.paymentDate=pay; t.paymentStatus=pay>now?"planned":"paid";
     }
     // Um jantar dividido com amigos (parte da Ana já devolvida, a do João ainda pendente)

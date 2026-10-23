@@ -79,6 +79,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 7. Scripts e estilos foram agrupados em um `app.js` e um `app.css`.
 8. **v29 (reorganização):** `README.md`, `agenteof.md` e `regrasof.md` viraram um só `README.md`; o `app.js` (2.671 linhas) foi dividido em 7 arquivos de até 500 linhas (mesma ordem e mesmas seções); testes de versão e de caminhos viraram `estrutura.test.js`; removidos o arquivo vazio `download`, o `icon-maskable-512.png` e 3 funções sem uso (`transactionGross`, `splitTotal`, `reimbursedAmount`).
 9. **v32:** redesenho visual no estilo Apple (só estilo; funcionalidades iguais). Ícone do app no cabeçalho, ícones SVG nas abas, cores da barra do navegador e `manifest.json` atualizados.
+10. **v33:** forma "Parcelado" retirada (parcelas = recorrência no crédito; antigos viraram Crédito); formas de pagamento em ordem Pix, Dinheiro, Débito, Crédito; crédito sem campo de data (vencimento automático pelo fechamento); categorias com "Outros" por último e lista abrindo no topo; botão "Selecionar todos"; ajuste de espaçamento do cartão de boas-vindas.
 
 ## 6. Funcionalidades
 
@@ -91,10 +92,10 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 - Selo de versão do app no cabeçalho (`vNN`).
 
 **Lançamentos**
-- Gasto e entrada, com forma de pagamento (Pix, débito, dinheiro, crédito, parcelado), cartão, parcelamento e **divisão do gasto entre pessoas** com controle de reembolso.
+- Gasto e entrada, com forma de pagamento (Pix, Dinheiro, Débito, Crédito, nessa ordem), cartão e **divisão do gasto entre pessoas** com controle de reembolso. **Não existe a forma "Parcelado"**: parcelas são feitas com "Repetir esta despesa mensalmente" (card que aparece em qualquer forma de pagamento). No Crédito o formulário pede só o cartão; o vencimento da fatura é calculado sozinho pelo fechamento do cartão (sem campo de data de pagamento).
 - No formulário de gasto: atalhos "Criar categoria" e "Criar pessoa" sem sair do formulário; sem campo de observação.
 - **Recorrência** nos formulários de gasto e entrada: opção mensal com data inicial e final opcionais (a data inicial acompanha a data do lançamento até o usuário editá-la).
-- Seleção em massa: definir/limpar pagamento previsto (só gastos), marcar como pago, excluir (com desfazer).
+- Seleção em massa (botão **Selecionar todos** marca tudo que aparece na lista): definir/limpar pagamento previsto (só gastos), marcar como pago, excluir (com desfazer).
 - Botões do cabeçalho e da aba: "Registrar gasto" e "Registrar entrada".
 
 **Cartões**: fechamento, vencimento, limite e total da fatura.
@@ -102,7 +103,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 **Regras** (uma aba só, menos poluição visual)
 - **Categorias**: criar/editar/excluir, limite mensal opcional, ordem por arrastar (alça ⠿ arrasta na hora).
 - **Pessoas**: quem participa das divisões.
-- **Recorrentes**: modelos de aluguel, assinaturas, salário... (gasto: uma parte só, sua; não há parcelas, divisão entre pessoas ou reembolso recorrentes). Pausar, retomar, editar, excluir.
+- **Recorrentes**: modelos de aluguel, assinaturas, salário... (gasto: uma parte só, sua; não há divisão entre pessoas nem reembolso recorrentes; no Crédito serve para registrar parcelas). Pausar, retomar, editar, excluir.
 - **Regras automáticas**: palavra na descrição sugere a categoria.
 
 **Importar**
@@ -136,7 +137,7 @@ data = {
 // Modelo recorrente
 { id, type:"expense|income", description, value, day:1-31, startMonth:"AAAA-MM", endMonth:""|"AAAA-MM",
   startDate:"AAAA-MM-DD", endDate:""|"AAAA-MM-DD",   // opcionais: limites exatos (modelos antigos só têm startMonth/endMonth e continuam valendo)
-  method, cardId, category,      // method/cardId/category só para gasto (sem parcelado)
+  method, cardId, category,      // method/cardId/category só para gasto
   active, generated:["AAAA-MM"], // meses já criados (nunca recria um mês, mesmo se o lançamento for excluído)
   createdAt }
 // Os lançamentos criados por um modelo levam recurringId = id do modelo.
@@ -145,12 +146,12 @@ data = {
 { id, createdAt, type:"expense",
   date:"AAAA-MM-DD",            // data da compra
   description, notes, 
-  value,                         // valor cheio (de uma parcela, se for parcelado)
-  method:"pix|debit|cash|credit|installment",
-  cardId,                        // "" se não for crédito/parcelado
+  value,                         // valor cheio (de uma parcela, se for compra em parcelas)
+  method:"pix|cash|debit|credit",   // "installment" (antigo Parcelado) é convertido para "credit" ao carregar
+  cardId,                        // "" se não for crédito
   paymentDate:"AAAA-MM-DD",      // quando será pago (é ESTA data que manda no Resumo)
   paymentStatus:"planned|paid",
-  installments, installmentNo,   // total de parcelas e número desta (1 e 1 se não parcelado)
+  installments, installmentNo,   // total de parcelas e número desta (1 e 1 se não for parcela; só informativo, vem de importação ou de lançamentos antigos)
   splits:[{id, category, amount, ownerId, reimbursed}] }  // divisão por categoria/pessoa; soma = value
 
 // Entrada (type "income")
@@ -166,8 +167,8 @@ data = {
 - O Resumo conta cada gasto pelo mês do PAGAMENTO PREVISTO (`paymentDate`), não pelo mês da compra. As entradas contam pela data da entrada.
 - Saídas previstas = valor cheio dos gastos com pagamento no mês. Gasto realmente seu = só a parte do `ownerId:"self"`. Saldo previsto = Entradas − Gasto realmente seu.
 - As porcentagens das barras (categoria, cartão e gasto realmente seu) são o valor dividido pelas Entradas do mês; sem entradas aparece "—".
-- Pix, Débito e Dinheiro: pagamento na própria data da compra e já pago. Crédito e Parcelado: precisam de cartão; o vencimento sugerido é o dia `due` do cartão no mês seguinte à compra; o status padrão é "previsto".
-- Parcelado: cada parcela é um lançamento próprio. O total é dividido pelo número de parcelas (a última leva os centavos que sobrarem) e a data da compra e do pagamento avançam um mês por parcela.
+- Pix, Débito e Dinheiro: pagamento na própria data da compra e já pago. Crédito: precisa de cartão; o vencimento é calculado por `nextCardPaymentDate` (compra a partir do dia de fechamento vai para a fatura seguinte; se o dia de vencimento é igual ou anterior ao do fechamento, vence no mês seguinte ao do fechamento); o status padrão é "previsto". Na edição, o vencimento já gravado só muda se a data da compra ou o cartão mudarem; para mudar a data de vários gastos use "Definir pagamento previsto" em Lançamentos.
+- Parcelas: use "Repetir esta despesa mensalmente" (recorrente); cada mês vira um lançamento próprio, com vencimento calculado pelo fechamento do cartão. Lançamentos antigos de "Parcelado" viraram Crédito e mantêm número da parcela e vencimento.
 - Divisão: a soma das partes precisa ser igual ao valor. A parte de outra pessoa fica "a receber" até `reimbursed:true`; ao marcar como recebido, o app cria uma entrada (`source:"reimbursement"`) ligada ao gasto.
 - A categoria "Empréstimos cedidos" é especial: é dinheiro emprestado. O que volta aparece à parte e não entra no Saldo previsto como previsão.
 - Resumo: os 4 cards do topo são clicáveis (abrem a lista de lançamentos). A "Planilha do mês" mostra despesas por categoria (valor cheio, na ordem da aba Categorias), entradas e saldo; o saldo dela usa valores cheios, por isso pode diferir do "Saldo previsto" do topo.
@@ -175,7 +176,7 @@ data = {
 - Botão voltar do celular: cada aba e cada painel aberto ganham uma entrada no histórico (`history.pushState`, em `ui.js`); o evento `popstate` (em `main.js`) fecha o painel ou volta para a aba anterior.
 - Celular (até 680px): tabelas de Lançamentos e de detalhes viram "cartões" via CSS (`data-label` nas células); as abas viram uma grade 3x2; o Fluxo de caixa começa recolhido.
 - Orçamento: o gasto contado é só o que é seu (`ownerId:"self"`) na categoria, pelo mês do pagamento. Verde < 80%, atenção de 80% a 99%, estourado a partir de 100%. Limite vazio ou 0 = sem orçamento.
-- Recorrentes: ao abrir o app (e ao voltar para ele) são criados os meses que faltam, do mês inicial até o mês seguinte ao atual (`RECURRING_HORIZON`). Gasto recorrente tem uma parte só, sua; crédito vence no mês seguinte (como no formulário); Pix/débito/dinheiro no futuro ficam "previsto". Mudar o modelo vale só para meses ainda não criados.
+- Recorrentes: ao abrir o app (e ao voltar para ele) são criados os meses que faltam, do mês inicial até o mês seguinte ao atual (`RECURRING_HORIZON`). Gasto recorrente tem uma parte só, sua; crédito vence pelo fechamento do cartão (como no formulário); Pix/débito/dinheiro no futuro ficam "previsto". Mudar o modelo vale só para meses ainda não criados.
 - Modo demonstração: `startDemo` guarda os dados reais em `meu-controle-v2-real` e carrega dados fictícios; `exitDemo` devolve os reais. Restaurar backup fica bloqueado durante a demonstração.
 - Backup: `applyBackup` copia campo a campo; ao criar um campo novo em `data`, inclua-o lá e em `loadData`.
 - Importação de extrato (seção `importer.js`, arquivo `05-cadastros.js`): o sinal que aparece na MAIORIA das linhas (sem contar "pagamento recebido") é o gasto: no CSV do Nubank as compras são positivas; em OFX de cartão e extratos de conta são negativas; empate = positivo é gasto. Linhas do sentido contrário viram entrada/estorno; "pagamento recebido/payment" vira pagamento de fatura. A prévia deixa trocar o tipo de cada linha e inverter todas. O CSV usa o separador da primeira linha (`;`, tabulação ou `,`), pois bancos brasileiros usam `;` com vírgula decimal. Se um arquivo traz como gasto linhas que uma importação antiga gravou como entrada ("Crédito importado", `source:"imported-credit"`), o app pergunta se pode apagá-las (cópia em `localStorage`, chave `meu-controle-importacao-removida`) e importar de novo como gasto.
@@ -196,4 +197,4 @@ data = {
 ## 10. Limites do app
 - Os dados ficam só no aparelho (sem conta e sem sincronização entre aparelhos): para levar dados de um aparelho para outro, use Importar > backup. O app pede armazenamento persistente ao navegador.
 - O PIN barra o uso do app, mas os dados guardados no navegador **não** são criptografados.
-- Valores ficam em reais com duas casas (arredondados nos pontos críticos, como parcelas).
+- Valores ficam em reais com duas casas (arredondados nos pontos críticos).

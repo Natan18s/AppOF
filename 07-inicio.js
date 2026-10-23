@@ -226,6 +226,7 @@ document.querySelectorAll("[data-month-step]").forEach(b=>b.addEventListener("cl
 $("txSearch").addEventListener("input",renderTransactions);
 $("txType").addEventListener("change",renderTransactions);
 $("selectAllTx").addEventListener("change",toggleSelectAll);
+$("selectAllBtn").onclick=selectAllVisible;
 $("quickExpense").onclick=()=>openTransactionModal("expense");
 $("quickIncome").onclick=()=>openTransactionModal("income");
 $("newExpense").onclick=()=>openTransactionModal("expense");

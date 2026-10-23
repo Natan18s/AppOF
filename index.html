@@ -31,7 +31,7 @@
 <header class="app-header">
   <div class="topbar">
     <div>
-      <div class="brand"><img class="brand-ico" src="icon-192.png" alt="" width="30" height="30">Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" class="ver">v32</span></div>
+      <div class="brand"><img class="brand-ico" src="icon-192.png" alt="" width="30" height="30">Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" class="ver">v33</span></div>
       <div class="subtitle">Finanças, cartões, parcelas e reembolsos em um só lugar</div>
     </div>
     <div class="top-actions">
@@ -164,7 +164,7 @@
   <!-- ===== ABA LANÇAMENTOS ===== -->
   <section id="transactions" class="page hidden">
     <div class="page-head">
-      <div><h1>Lançamentos</h1><p class="muted">Uma compra pode ter várias categorias e várias pessoas pagando partes dela. Use a coluna "Selecionar" para excluir ou alterar vários lançamentos de uma vez.</p></div>
+      <div><h1>Lançamentos</h1><p class="muted">Uma compra pode ter várias categorias e várias pessoas pagando partes dela. Use "Selecionar todos" (ou marque um a um) para excluir ou alterar vários lançamentos de uma vez.</p></div>
       <div class="row-actions"><button class="btn primary" id="newExpense">Registrar gasto</button><button class="btn" id="newIncome">Registrar entrada</button></div>
     </div>
 
@@ -174,6 +174,9 @@
       <div><label>Buscar</label><input id="txSearch" placeholder="Uber, Mercado, Renner..."></div>
       <div><label>Tipo</label><select id="txType"><option value="">Todos</option><option value="expense">Gastos</option><option value="income">Entradas</option><option value="card_payment">Pagamentos de cartão</option></select></div>
     </article>
+
+    <!-- Selecionar todos os lançamentos que aparecem na lista -->
+    <div class="row-actions select-all-row"><button type="button" class="btn" id="selectAllBtn">☑ Selecionar todos</button></div>
 
     <!-- BARRA DE AÇÕES EM MASSA: aparece quando há lançamentos marcados em "Selecionar" -->
   <div id="bulkBar" class="bulkbar hidden">
@@ -376,7 +379,7 @@
 
     <details class="card section">
       <summary><h2>Registrar gasto e Registrar entrada</h2></summary>
-      <p><b>Forma de pagamento</b> — Pix, Débito e Dinheiro escondem os campos de cartão/parcelas e já pagam na data da compra. Crédito pede o cartão e calcula o vencimento sozinho. Parcelado faz o mesmo e ainda lança as parcelas futuras automaticamente, uma por mês.</p>
+      <p><b>Forma de pagamento</b> — Pix, Dinheiro e Débito escondem o campo de cartão e já pagam na data da compra. Crédito pede só o cartão e calcula sozinho o vencimento da fatura pelo dia de fechamento. Para parcelas, marque “Repetir esta despesa mensalmente”: o app registra um lançamento por mês no período escolhido.</p>
       <p><b>Divisão do gasto por pessoa</b> — por padrão o valor fica todo com "Você"; ao adicionar pessoas, o app divide igual entre elas. Dá para ajustar cada valor manualmente. Quem não for "Você" fica com uma pendência de reembolso.</p>
       <p>Acima de "Categoria" e de "Quem paga?" há os atalhos <b>Criar categoria</b> e <b>Criar pessoa</b>: você cria na hora, sem sair do formulário.</p>
       <p>O calendário sempre abre no mês que você está vendo na aba, para facilitar lançar algo num mês passado ou futuro.</p>

@@ -114,13 +114,16 @@ const LOAN_CATEGORY = "Empréstimos cedidos";   // categoria especial: dinheiro 
 const ACTIVITY_ICONS={create:"➕",edit:"✏️",delete:"🗑️",paid:"✅",unpaid:"↩️",received:"💰",import:"📥",restore:"♻️",bulk:"📅",undo:"↶"};
 
 // Formas de pagamento disponíveis no formulário de gasto.
-const METHODS={pix:"Pix",debit:"Débito",cash:"Dinheiro",credit:"Crédito",installment:"Parcelado"};
+const METHODS={pix:"Pix",cash:"Dinheiro",debit:"Débito",credit:"Crédito"};   // ordem em que aparecem na lista
 
-// Diz se a forma de pagamento usa cartão de crédito (crédito ou parcelado).
-const isCreditMethod=m=>m==="credit"||m==="installment";
+// Categorias na ordem de cima para baixo, com "Outros" sempre por último (usado nas listas de escolha).
+const categoriesOutrosLast=cats=>[...cats.filter(c=>c!=="Outros"),...cats.filter(c=>c==="Outros")];
+
+// Diz se a forma de pagamento usa cartão de crédito.
+const isCreditMethod=m=>m==="credit";
 
 // Controles do formulário de gasto: indicam se o usuário já mexeu em divisão, vencimento, 1º mês ou status (para o app parar de preencher sozinho).
-let autoSplit=false, payTouched=false, firstMonthTouched=false, statusTouched=false;
+let autoSplit=false, statusTouched=false;
 
 ;
 /* ===== theme.js ===== */
@@ -193,14 +196,16 @@ function incomeBreakdownForMonth(m){
 // Gastos cujo PAGAMENTO previsto cai no mês. É esta data (e não a da compra) que manda no Resumo.
 function scheduledPaymentsForMonth(m){return data.transactions.filter(t=>t.type==="expense" && (t.paymentDate||t.date).slice(0,7)===m);}
 
-// Calcula o próximo vencimento do cartão a partir do dia do fechamento.
+// Calcula o vencimento da fatura onde a compra cai: compra a partir do dia do fechamento vai para a fatura seguinte;
+// se o dia de vencimento é igual ou anterior ao do fechamento, a fatura vence no mês seguinte ao do fechamento.
 function nextCardPaymentDate(cardId, baseDate=today()){
   const card=data.cards.find(c=>c.id===cardId);
   if(!card) return baseDate;
-  const d=new Date(baseDate+"T12:00:00");
+  const d=new Date(baseDate+"T12:00:00"), closing=Number(card.closing||31), due=Number(card.due||1);
   let y=d.getFullYear(), m=d.getMonth();
-  if(d.getDate()>=Number(card.closing||31)) m+=1;
-  let day=Math.min(Number(card.due||1), new Date(y,m+1,0).getDate());
+  if(d.getDate()>=closing) m+=1;
+  if(due<=closing) m+=1;
+  let day=Math.min(due, new Date(y,m+1,0).getDate());
   return localISO(new Date(y,m,day));
 }
 
@@ -208,15 +213,6 @@ function nextCardPaymentDate(cardId, baseDate=today()){
 function incomeOrigin(t){
   if(t.source!=="reimbursement") return "normal";
   return t.sourceCategory===LOAN_CATEGORY ? "loan" : "reimb";
-}
-
-// Crédito/Parcelado: vencimento do cartão no MÊS SEGUINTE ao da compra
-function nextMonthPaymentDate(cardId,baseDate){
-  const card=data.cards.find(c=>c.id===cardId);
-  const d=new Date((baseDate||today())+"T12:00:00");
-  const y=d.getFullYear(), m=d.getMonth()+1;
-  const day=Math.min(Number(card?.due)||d.getDate(), new Date(y,m+1,0).getDate());
-  return localISO(new Date(y,m,day));
 }
 
 // ====================================================================
@@ -310,7 +306,7 @@ function normalizeTransaction(t){
   if(typeof t.value==="number") t.value=cleanFloat(t.value);
   if(t.type==="expense"){
     t.splits=Array.isArray(t.splits)&&t.splits.length?t.splits:[{id:uid(),category:"Outros",amount:Number(t.value)||0,ownerId:"self",reimbursed:false}];
-    t.installments=t.installments||1;t.installmentNo=t.installmentNo||1;if(!t.method&&t.cardId)t.method=t.installments>1?"installment":"credit";
+    t.installments=t.installments||1;t.installmentNo=t.installmentNo||1;if(t.method==="installment"||(!t.method&&t.cardId))t.method="credit";   // a forma "Parcelado" foi retirada: lançamentos antigos viram Crédito (parcela e vencimento ficam como estavam)
     if(!t.paymentDate) t.paymentDate=t.cardId?nextCardPaymentDate(t.cardId,t.date||today()):(t.date||today());
     if(!t.paymentStatus) t.paymentStatus=t.cardId?"planned":"paid";
     t.splits.forEach(s=>{ if(typeof s.amount==="number") s.amount=cleanFloat(s.amount); });
