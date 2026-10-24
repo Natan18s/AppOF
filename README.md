@@ -36,8 +36,8 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 | `03-lancamentos.js` | sheet-drag.js, transactions.js (tabela e seleção em massa) |
 | `04-formulario.js` | transaction-form.js (formulário de gasto/entrada, reembolsos) |
 | `05-cadastros.js` | cadastros.js, importer.js |
-| `06-extras.js` | backup.js, recorrentes.js, graficos.js, exportar.js, demo.js |
-| `07-inicio.js` | bloqueio.js, integridade.js, main.js (**sempre o último**) |
+| `06-extras.js` | backup.js, recorrentes.js, graficos.js, exportar.js |
+| `07-inicio.js` | demo.js, bloqueio.js, integridade.js, main.js (**sempre o último**) |
 
 ## 4. Onde mexer para...
 | Quero mudar... | Arquivo |
@@ -80,6 +80,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 8. **v29 (reorganização):** `README.md`, `agenteof.md` e `regrasof.md` viraram um só `README.md`; o `app.js` (2.671 linhas) foi dividido em 7 arquivos de até 500 linhas (mesma ordem e mesmas seções); testes de versão e de caminhos viraram `estrutura.test.js`; removidos o arquivo vazio `download`, o `icon-maskable-512.png` e 3 funções sem uso (`transactionGross`, `splitTotal`, `reimbursedAmount`).
 9. **v32:** redesenho visual no estilo Apple (só estilo; funcionalidades iguais). Ícone do app no cabeçalho, ícones SVG nas abas, cores da barra do navegador e `manifest.json` atualizados.
 10. **v33:** forma "Parcelado" retirada (parcelas = recorrência no crédito; antigos viraram Crédito); formas de pagamento em ordem Pix, Dinheiro, Débito, Crédito; crédito sem campo de data (vencimento automático pelo fechamento); categorias com "Outros" por último e lista abrindo no topo; botão "Selecionar todos"; ajuste de espaçamento do cartão de boas-vindas.
+11. **v34:** recorrência com campo "Todo dia" (antes o dia vinha só da data inicial e o app gravava dia 1); editar recorrente atualiza os já criados; card "Repetir mensalmente" também ao editar; divisão do gasto totalmente automática (sem "Dividir igualmente"); "Últimos lançamentos" com caixinhas e botão Excluir selecionados, também no fim da aba Lançamentos; removido o botão azul "Selecionar todos" (vale a caixinha do cabeçalho, que agora aparece no celular); `demo.js` passou para o `07-inicio.js` (o `06-extras.js` passaria de 500 linhas).
 
 ## 6. Funcionalidades
 
@@ -94,8 +95,9 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 **Lançamentos**
 - Gasto e entrada, com forma de pagamento (Pix, Dinheiro, Débito, Crédito, nessa ordem), cartão e **divisão do gasto entre pessoas** com controle de reembolso. **Não existe a forma "Parcelado"**: parcelas são feitas com "Repetir esta despesa mensalmente" (card que aparece em qualquer forma de pagamento). No Crédito o formulário pede só o cartão; o vencimento da fatura é calculado sozinho pelo fechamento do cartão (sem campo de data de pagamento).
 - No formulário de gasto: atalhos "Criar categoria" e "Criar pessoa" sem sair do formulário; sem campo de observação.
-- **Recorrência** nos formulários de gasto e entrada: opção mensal com data inicial e final opcionais (a data inicial acompanha a data do lançamento até o usuário editá-la).
-- Seleção em massa (botão **Selecionar todos** marca tudo que aparece na lista): definir/limpar pagamento previsto (só gastos), marcar como pago, excluir (com desfazer).
+- **Recorrência** nos formulários de gasto e entrada (**também ao editar**, exceto lançamento que já veio de uma recorrência): opção mensal com **"Todo dia"** (dia do mês, 1 a 31), "A partir de" e "Até" opcional. Os campos acompanham a data do lançamento até o usuário mexer neles. Ao repetir na edição, o próprio lançamento é a 1ª ocorrência (o mês dele não é criado de novo). Ao editar um recorrente na aba Regras, o app pergunta se atualiza também os já criados (do mês atual em diante).
+- **Divisão automática**: o valor das partes se recalcula sozinho (mudar o valor total, adicionar/remover pessoas). Quem não foi mexido divide igualmente o que sobra; ao digitar o valor de uma pessoa ela fica fixa e as outras dividem o resto. Não existe botão "Dividir igualmente".
+- Seleção em massa (a caixinha do cabeçalho da tabela marca todos que aparecem na lista; no celular o cabeçalho mostra só ela): definir/limpar pagamento previsto (só gastos), marcar como pago, excluir (com desfazer).
 - Botões do cabeçalho e da aba: "Registrar gasto" e "Registrar entrada".
 
 **Cartões**: fechamento, vencimento, limite e total da fatura.
@@ -127,7 +129,7 @@ data = {
   categories: ["Casa", "Alimentação", ...],    // lista de nomes
   rules:   [{id, keyword, category}],          // palavra na descrição -> categoria sugerida
   importLog:   [{id, file, date, count}],      // arquivos já importados
-  activityLog: [{id, at, kind, text, detail, txId}],  // histórico de "Últimos lançamentos" (máx. 300)
+  activityLog: [{id, at, kind, text, detail, txId}],  // histórico de "Últimos lançamentos" (máx. 300; cada item tem caixinha para excluir do histórico, no Resumo e no fim da aba Lançamentos)
   lastBackupAt: número | null,
   budgets: {"Lazer": 300},                     // limite mensal por categoria (sem entrada = sem limite)
   recurring: [ ...modelos recorrentes... ],    // veja abaixo
@@ -169,7 +171,7 @@ data = {
 - As porcentagens das barras (categoria, cartão e gasto realmente seu) são o valor dividido pelas Entradas do mês; sem entradas aparece "—".
 - Pix, Débito e Dinheiro: pagamento na própria data da compra e já pago. Crédito: precisa de cartão; o vencimento é calculado por `nextCardPaymentDate` (compra a partir do dia de fechamento vai para a fatura seguinte; se o dia de vencimento é igual ou anterior ao do fechamento, vence no mês seguinte ao do fechamento); o status padrão é "previsto". Na edição, o vencimento já gravado só muda se a data da compra ou o cartão mudarem; para mudar a data de vários gastos use "Definir pagamento previsto" em Lançamentos.
 - Parcelas: use "Repetir esta despesa mensalmente" (recorrente); cada mês vira um lançamento próprio, com vencimento calculado pelo fechamento do cartão. Lançamentos antigos de "Parcelado" viraram Crédito e mantêm número da parcela e vencimento.
-- Divisão: a soma das partes precisa ser igual ao valor. A parte de outra pessoa fica "a receber" até `reimbursed:true`; ao marcar como recebido, o app cria uma entrada (`source:"reimbursement"`) ligada ao gasto.
+- Divisão: a soma das partes precisa ser igual ao valor (o formulário recalcula sozinho; `recalcSplits` em `04-formulario.js`). A parte de outra pessoa fica "a receber" até `reimbursed:true`; ao marcar como recebido, o app cria uma entrada (`source:"reimbursement"`) ligada ao gasto.
 - A categoria "Empréstimos cedidos" é especial: é dinheiro emprestado. O que volta aparece à parte e não entra no Saldo previsto como previsão.
 - Resumo: os 4 cards do topo são clicáveis (abrem a lista de lançamentos). A "Planilha do mês" mostra despesas por categoria (valor cheio, na ordem da aba Categorias), entradas e saldo; o saldo dela usa valores cheios, por isso pode diferir do "Saldo previsto" do topo.
 - Categorias: `data.categories` é uma lista de nomes na ordem escolhida pelo usuário (segurar e arrastar na aba Regras; a alça ⠿ arrasta na hora). Renomear uma categoria atualiza lançamentos, regras, recorrentes e o limite; excluir é bloqueado se ela estiver em uso. `categoriesV2` marca a migração única que juntou as categorias padrão e ordenou em ordem alfabética.

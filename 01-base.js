@@ -123,7 +123,7 @@ const categoriesOutrosLast=cats=>[...cats.filter(c=>c!=="Outros"),...cats.filter
 const isCreditMethod=m=>m==="credit";
 
 // Controles do formulário de gasto: indicam se o usuário já mexeu em divisão, vencimento, 1º mês ou status (para o app parar de preencher sozinho).
-let autoSplit=false, statusTouched=false;
+let statusTouched=false;
 
 ;
 /* ===== theme.js ===== */

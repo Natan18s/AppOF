@@ -288,19 +288,51 @@ function renderDashboard(){
     if(row)goToTransaction(row.dataset.txId);
   };
 
-  // Últimos lançamentos: registro do que foi feito (independe do mês), do mais novo para o mais antigo
-  const log=data.activityLog||[];
-  const fmtWhen=at=>{const d=new Date(at);return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})};
-  $("activityBadge").textContent=String(log.length);
-  $("activityList").innerHTML=log.length ? log.slice(0,100).map(a=>{
-    const exists=a.txId&&data.transactions.some(t=>t.id===a.txId);
-    const undoable=!!a.undo?.changes?.length&&!a.undoneAt;
-    return `<div class="activity-item${exists?" clickable":""}"${exists?` onclick="goToTransaction('${a.txId}')" title="Ver em Lançamentos"`:""}><span class="activity-icon">${ACTIVITY_ICONS[a.kind]||"•"}</span><div class="activity-main"><b>${esc(a.text)}</b><div class="muted">${esc(a.detail||"")}</div></div><div class="activity-meta"><div class="activity-when muted">${fmtWhen(a.at)}</div>${undoable?`<button class="btn activity-undo" type="button" onclick="event.stopPropagation();undoActivity('${esc(a.id)}')">Desfazer</button>`:a.undoneAt?'<span class="activity-undone">Desfeito</span>':""}</div></div>`;
-  }).join("")+(log.length>100?`<div class="muted" style="padding:8px 0">Mostrando os 100 mais recentes de ${log.length}.</div>`:"") : '<div class="empty">Nenhuma atividade registrada ainda. O que você lançar, editar ou excluir daqui para frente aparece aqui.</div>';
+  // Últimos lançamentos (Resumo e aba Lançamentos)
+  renderActivity();
 
   // Planilha do mês (gastos por categoria + entradas + saldo)
   renderSheet();
 }
+
+// ----- Últimos lançamentos (histórico): aparece no Resumo e no fim da aba Lançamentos -----
+// Registro do que foi feito (independe do mês), do mais novo para o mais antigo. Cada item tem uma caixinha para excluir do histórico.
+let selectedActivityIds=new Set();   // registros marcados para excluir
+
+function renderActivity(){
+  const log=data.activityLog||[];
+  [...selectedActivityIds].forEach(id=>{if(!log.some(a=>a.id===id))selectedActivityIds.delete(id)});
+  const fmtWhen=at=>{const d=new Date(at);return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})};
+  const html=log.length ? log.slice(0,100).map(a=>{
+    const exists=a.txId&&data.transactions.some(t=>t.id===a.txId);
+    const undoable=!!a.undo?.changes?.length&&!a.undoneAt;
+    return `<div class="activity-item${exists?" clickable":""}"${exists?` onclick="goToTransaction('${a.txId}')" title="Ver em Lançamentos"`:""}><input type="checkbox" class="act-check" value="${esc(a.id)}" aria-label="Selecionar este registro do histórico" onclick="event.stopPropagation()" onchange="toggleActivity('${esc(a.id)}',this.checked)"><span class="activity-icon">${ACTIVITY_ICONS[a.kind]||"•"}</span><div class="activity-main"><b>${esc(a.text)}</b><div class="muted">${esc(a.detail||"")}</div></div><div class="activity-meta"><div class="activity-when muted">${fmtWhen(a.at)}</div>${undoable?`<button class="btn activity-undo" type="button" onclick="event.stopPropagation();undoActivity('${esc(a.id)}')">Desfazer</button>`:a.undoneAt?'<span class="activity-undone">Desfeito</span>':""}</div></div>`;
+  }).join("")+(log.length>100?`<div class="muted" style="padding:8px 0">Mostrando os 100 mais recentes de ${log.length}.</div>`:"") : '<div class="empty">Nenhuma atividade registrada ainda. O que você lançar, editar ou excluir daqui para frente aparece aqui.</div>';
+  document.querySelectorAll("[data-activity-list]").forEach(el=>{el.innerHTML=html});
+  document.querySelectorAll("[data-activity-badge]").forEach(el=>{el.textContent=String(log.length)});
+  updateActivityControls();
+}
+
+// Sincroniza as caixinhas, o "Selecionar todos" e o botão Excluir das duas telas com a seleção atual.
+function updateActivityControls(){
+  const total=(data.activityLog||[]).length, n=selectedActivityIds.size;
+  document.querySelectorAll(".act-check").forEach(c=>{c.checked=selectedActivityIds.has(c.value)});
+  document.querySelectorAll("[data-activity-all]").forEach(c=>{c.checked=total>0&&n===total;c.disabled=!total});
+  document.querySelectorAll("[data-activity-delete]").forEach(b=>{b.disabled=!n;b.textContent=n?`Excluir selecionados (${n})`:"Excluir selecionados"});
+}
+
+function toggleActivity(id,checked){ if(checked)selectedActivityIds.add(id);else selectedActivityIds.delete(id); updateActivityControls(); }
+
+// Exclui do histórico os registros marcados (só o registro; os lançamentos continuam como estão).
+async function deleteSelectedActivities(){
+  const n=selectedActivityIds.size; if(!n)return;
+  if(!(await askConfirm(`Excluir ${n} registro(s) de "Últimos lançamentos"? Some só o registro do que foi feito; os lançamentos continuam como estão. Esses itens não poderão mais ser desfeitos.`,{title:"Excluir do histórico",okText:"Excluir",danger:true})))return;
+  data.activityLog=(data.activityLog||[]).filter(a=>!selectedActivityIds.has(a.id));
+  selectedActivityIds.clear(); save(); toast(`${n} registro(s) excluído(s) do histórico`);
+}
+
+document.addEventListener("change",e=>{ if(e.target.matches("[data-activity-all]")){ selectedActivityIds=e.target.checked?new Set((data.activityLog||[]).map(a=>a.id)):new Set(); updateActivityControls(); } });
+document.addEventListener("click",e=>{ const b=e.target.closest("[data-activity-delete]"); if(b&&!b.disabled)deleteSelectedActivities(); });
 
 // Tabela de gastos usada nos painéis de detalhe (categoria, cartão, gasto realmente seu).
 function detailTable(rows,valueOf){

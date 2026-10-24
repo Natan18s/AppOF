@@ -40,14 +40,15 @@ function transactionForm(t=null,type="expense"){
     `:`
       <div><label>Origem</label><select name="incomeSource"><option value="normal" ${t?.source!=="reimbursement"?"selected":""}>Entrada normal</option><option value="reimbursement" ${t?.source==="reimbursement"?"selected":""}>Reembolso recebido</option></select></div>
     `}</div>
-    ${!t?`<div class="full recurring-card-wrap" id="grpRecurring">
+    ${!t?.recurringId?`<div class="full recurring-card-wrap" id="grpRecurring">
       <label class="recurring-card" for="txRecurring"><input type="checkbox" id="txRecurring" name="recurring"><span><b>Repetir esta ${isExpense?"despesa":"entrada"} mensalmente</b><small>${isExpense?"Registra suas parcelas e cria um lançamento por mês durante o período escolhido.":"Cria um lançamento por mês durante o período escolhido."}</small></span></label>
       <div class="form-grid recurring-dates hidden" id="recurringDates">
-        <div><label>De</label><input name="recurringStartDate" id="recurringStartDate" type="date" value="${t?.date||defaultEntryDate()}"></div>
+        <div><label>Todo dia</label><input name="recurringDay" id="recurringDay" type="number" min="1" max="31" step="1" value="${Number((t?.date||defaultEntryDate()).slice(8,10))}"><div class="field-note">Dia do mês em que acontece.</div></div>
+        <div><label>A partir de</label><input name="recurringStartDate" id="recurringStartDate" type="date" value="${t?.date||defaultEntryDate()}"></div>
         <div><label>Até (opcional)</label><input name="recurringEndDate" id="recurringEndDate" type="date"><div class="field-note">Deixe vazio para manter a recorrência em até 6 meses.</div></div>
       </div>
-    </div>`:""}
-    ${isExpense?`<div class="split-header"><div><b>Divisão do gasto por pessoa</b><div class="field-note">Por padrão o valor total fica com Você. Ao adicionar pessoas, o valor é dividido igualmente entre elas (dá para ajustar depois).</div></div><div class="split-actions"><button type="button" class="btn equal-btn" id="splitEqual">Dividir igualmente</button><button type="button" class="btn" id="addSplit">Adicionar pessoas</button></div></div><div id="splitList">${splits.map((s,i)=>splitRow(s,i,data.categories,data.people)).join("")}</div><div class="split-total"><span>Total dividido</span><span id="splitSum">${fmtMoney(splits.reduce((a,x)=>a+Number(x.amount||0),0))}</span></div><div class="field-note" id="splitHint"></div>`:""}
+    </div>`:`<div class="field-note full">Este lançamento foi criado por uma recorrência. Para mudar os próximos meses, edite o recorrente na aba Regras.</div>`}
+    ${isExpense?`<div class="split-header"><div><b>Divisão do gasto por pessoa</b><div class="field-note">O valor total fica com Você. Ao adicionar pessoas, o app divide o valor sozinho; se você mudar o valor de uma pessoa, o restante é recalculado entre as outras.</div></div><div class="split-actions"><button type="button" class="btn" id="addSplit">Adicionar pessoas</button></div></div><div id="splitList">${splits.map((s,i)=>splitRow(s,i,data.categories,data.people)).join("")}</div><div class="split-total"><span>Total dividido</span><span id="splitSum">${fmtMoney(splits.reduce((a,x)=>a+Number(x.amount||0),0))}</span></div><div class="field-note" id="splitHint"></div>`:""}
     <div class="row-actions end" style="margin-top:15px"><button type="button" class="btn ghost" id="cancelTx">Cancelar</button><button class="btn primary">Salvar</button></div>
   </form>`;
 }
@@ -69,13 +70,26 @@ function splitRow(s,i,categories,people){
   </div>`;
 }
 
-// Divide o valor total igualmente entre as linhas da divisão (a última leva o centavo que sobrar).
-function distributeEqual(){
+// Divisão automática: as linhas que você não mexeu (sem data-manual) dividem igualmente o que sobra do valor total.
+// Ao mudar o valor total só elas se ajustam; se todas foram ajustadas à mão, todas mudam na mesma proporção.
+function recalcSplits(){
   const rows=[...document.querySelectorAll("#splitList .split")]; if(!rows.length)return;
-  const cents=Math.round(Number($("txValue").value||0)*100), each=Math.floor(cents/rows.length);
-  rows.forEach((r,i)=>{const c=i===rows.length-1?cents-each*(rows.length-1):each;r.querySelector(".split-amount").value=(c/100).toFixed(2)});
+  const total=Math.round(Number($("txValue").value||0)*100);
+  const amt=r=>Math.round(Number(r.querySelector(".split-amount").value||0)*100);
+  const setAmt=(r,c)=>{r.querySelector(".split-amount").value=(c/100).toFixed(2)};
+  const free=rows.filter(r=>!r.dataset.manual), locked=rows.filter(r=>r.dataset.manual);
+  if(free.length){
+    const rest=Math.max(0,total-locked.reduce((n,r)=>n+amt(r),0)), each=Math.floor(rest/free.length);
+    free.forEach((r,i)=>setAmt(r,i===free.length-1?rest-each*(free.length-1):each));   // a última leva o centavo que sobrar
+  }else{
+    const sum=rows.reduce((n,r)=>n+amt(r),0); let acc=0;
+    rows.forEach((r,i)=>{const c=i===rows.length-1?total-acc:(sum?Math.round(amt(r)*total/sum):Math.floor(total/rows.length));acc+=c;setAmt(r,c)});
+  }
   updateSplitTotal();
 }
+
+// Volta tudo para a divisão igual entre as pessoas (ao adicionar ou remover alguém).
+function distributeEqual(){ document.querySelectorAll("#splitList .split").forEach(r=>delete r.dataset.manual); recalcSplits(); }
 
 // Abre o formulário de gasto/entrada e liga os comportamentos automáticos (cartão, status, divisão). Recorrência ao fim de cada bloco.
 function syncRecurringDateFields(){
@@ -83,6 +97,21 @@ function syncRecurringDateFields(){
   const enabled=$("txRecurring").checked;
   $("recurringDates").classList.toggle("hidden",!enabled);
   $("recurringStartDate").required=enabled;
+  $("recurringDay").required=enabled;
+}
+
+// Lê e valida os campos de recorrência do formulário. Devolve {startDate,endDate,day} ou null (já avisou o usuário).
+function readRecurringFields(f){
+  const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"",day=Math.round(Number(f.get("recurringDay"))||0);
+  if(!startDate){askAlert("Informe a data inicial da recorrência.");return null}
+  if(endDate&&endDate<startDate){askAlert("A data final não pode ser antes da data inicial.");return null}
+  if(!(day>=1&&day<=31)){askAlert("Informe o dia do mês da recorrência (de 1 a 31).");return null}
+  return {startDate,endDate,day};
+}
+
+// Monta o modelo recorrente a partir dos campos validados (extra = campos próprios de gasto).
+function buildRecurringModel(type,rec,base,extra={}){
+  return {id:uid(),type,description:base.description,value:base.value,day:rec.day,startMonth:rec.startDate.slice(0,7),endMonth:rec.endDate?rec.endDate.slice(0,7):"",startDate:rec.startDate,endDate:rec.endDate,...extra,active:true,generated:[],createdAt:Date.now()};
 }
 
 function openTransactionModal(type="expense",tx=null){
@@ -91,7 +120,7 @@ function openTransactionModal(type="expense",tx=null){
   // Gasto: liga os comportamentos automáticos do formulário (forma de pagamento, status e divisão)
   if(type==="expense"){
     const list=$("splitList");
-    autoSplit=!tx; statusTouched=!!tx;
+    statusTouched=!!tx;
     // show(): mostra ou esconde um grupo de campos (e desativa os inputs dele quando escondido)
     const show=(id,on)=>{const g=$(id);g.classList.toggle("hidden",!on);g.querySelectorAll("input,select").forEach(i=>{i.disabled=!on||i.dataset.lock==="1"})};
     // refreshMethod(): ao trocar a forma de pagamento, mostra/esconde o cartão e ajusta o status padrão.
@@ -109,26 +138,32 @@ function openTransactionModal(type="expense",tx=null){
       const cat=rows[0]?.querySelector(".split-category").value||"Outros";
       list.insertAdjacentHTML("beforeend",splitRow({id:uid(),category:cat,amount:0,ownerId:cand.id,reimbursed:false},rows.length,data.categories,data.people));
       bindSplitRow(list.lastElementChild);
-      autoSplit=true;distributeEqual();   // recalcula o valor entre todas as pessoas
+      distributeEqual();   // recalcula o valor entre todas as pessoas
       if(data.people.length<2)toast("Use \"Criar pessoa\" (acima de Quem paga?) para cadastrar quem divide o gasto.");
     };
     // Ligações dos botões e campos do formulário (cada alteração recalcula a divisão)
     $("addSplit").onclick=addPerson;
-    $("splitEqual").onclick=()=>{autoSplit=true;distributeEqual()};
     [...list.children].forEach(bindSplitRow);
     $("txMethod").addEventListener("change",refreshMethod);
     $("txStatus").addEventListener("change",()=>{statusTouched=true});
-    $("txValue").addEventListener("input",()=>{if(autoSplit)distributeEqual();else updateSplitTotal()});
+    $("txValue").addEventListener("input",recalcSplits);
     $("txDescription").addEventListener("input",e=>{if(!tx){const first=$("splitList").querySelector(".split-category");if(first&&first.value==="Outros")first.value=applyRule(e.target.value)}});
-    if(autoSplit)distributeEqual();
+    if(tx){   // edição: se as partes não eram iguais, ficam como "ajustadas à mão" (mudar o valor total mantém a proporção)
+      const amts=[...list.querySelectorAll(".split-amount")].map(i=>Number(i.value));
+      if(!amts.every(v=>Math.abs(v-amts[0])<0.02)) list.querySelectorAll(".split").forEach(r=>{r.dataset.manual="1"});
+    }else distributeEqual();
     refreshMethod();updateSplitTotal();
   }
   if($("txRecurring")){
+    let recurringDayTouched=false;
+    const dayOf=iso=>Number((iso||"").slice(8,10))||1;
     $("txRecurring").addEventListener("change",syncRecurringDateFields);
-    $("txDate").addEventListener("change",()=>{
+    $("txDate").addEventListener("change",()=>{   // enquanto você não mexer nos campos da recorrência, eles acompanham a data do lançamento
       if(!recurringStartTouched)$("recurringStartDate").value=$("txDate").value;
+      if(!recurringDayTouched)$("recurringDay").value=dayOf($("txDate").value);
     });
-    $("recurringStartDate").addEventListener("input",()=>{recurringStartTouched=true});
+    $("recurringStartDate").addEventListener("input",()=>{recurringStartTouched=true;if(!recurringDayTouched)$("recurringDay").value=dayOf($("recurringStartDate").value)});
+    $("recurringDay").addEventListener("input",()=>{recurringDayTouched=true});
   }
   // Cancelar fecha o painel; enviar o formulário salva como gasto ou como entrada
   $("cancelTx").onclick=closeModal;
@@ -139,9 +174,10 @@ function openTransactionModal(type="expense",tx=null){
 function bindSplitRow(row){
   row.querySelector(".remove-split").onclick=()=>{
     if(document.querySelectorAll("#splitList .split").length<=1){askAlert("O gasto precisa ter pelo menos uma parte.");return}
-    row.remove();autoSplit?distributeEqual():updateSplitTotal();
+    row.remove();distributeEqual();
   };
-  row.querySelector(".split-amount").addEventListener("input",()=>{autoSplit=false;updateSplitTotal()});
+  row.querySelector(".split-amount").addEventListener("input",updateSplitTotal);   // enquanto digita: só mostra o total
+  row.querySelector(".split-amount").addEventListener("change",()=>{row.dataset.manual="1";recalcSplits()});   // ao terminar: esta pessoa fica fixa e as outras dividem o resto
   row.querySelector(".split-owner").addEventListener("change",updateSplitStatus);
   bindInlineCreate(row.querySelector(".category"),".new-cat",".split-category",createCategoryInline);   // "+ Criar categoria"
   bindInlineCreate(row.querySelector(".owner"),".new-person",".split-owner",createPersonInline);       // "+ Criar pessoa"
@@ -203,14 +239,13 @@ function collectSplits(){return [...document.querySelectorAll("#splitList .split
 function saveExpenseFromForm(existingId){
   const f=new FormData($("txForm")),value=Number(f.get("value")||0),splits=collectSplits(),sum=splits.reduce((s,x)=>s+x.amount,0);
   const method=f.get("method")||"pix",credit=isCreditMethod(method),date=f.get("date");
-  const wantsRecurring=!existingId&&$("txRecurring")?.checked;
+  const wantsRecurring=$("txRecurring")?.checked;   // vale também ao editar: o lançamento vira o primeiro da recorrência
   if(!value){askAlert("Informe um valor.");return}
   if(Math.abs(sum-value)>0.005){askAlert("A soma das partes precisa ser exatamente igual ao valor total.");return}
   if(credit&&!f.get("cardId")){askAlert("Selecione o cartão.");return}
+  let rec=null;
   if(wantsRecurring){
-    const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
-    if(!startDate){askAlert("Informe a data inicial da recorrência.");return}
-    if(endDate&&endDate<startDate){askAlert("A data final não pode ser antes da data inicial.");return}
+    rec=readRecurringFields(f); if(!rec)return;
     if(splits.length!==1||splits[0].ownerId!=="self"||Math.abs(splits[0].amount-value)>0.005){askAlert("Para repetir, o gasto precisa ter uma única divisão atribuída a Você.");return}
   }
   // Vencimento do crédito: calculado pelo fechamento do cartão. Na edição, se a data da compra e o cartão não mudaram, mantém o vencimento já gravado.
@@ -221,19 +256,23 @@ function saveExpenseFromForm(existingId){
   }
   // Pix/Débito/Dinheiro: o campo de cartão fica de fora; pagamento = data da compra
   const base={date,description:f.get("description"),value,method,cardId:credit?f.get("cardId"):"",paymentDate,paymentStatus:f.get("paymentStatus")||(credit?"planned":"paid"),type:"expense",splits};   // sem "notes": o formulário não tem mais Observação (a antiga é preservada na edição)
+  const recExtra={method:base.method,cardId:base.cardId,category:splits[0].category};
   if(existingId){
     const old=data.transactions.find(t=>t.id===existingId);
     const updated={...old,...base};
+    let model=null;
+    if(rec){   // editar + repetir: este lançamento é o primeiro da recorrência (o mês dele não é criado de novo)
+      model=buildRecurringModel("expense",rec,base,recExtra); model.generated=[date.slice(0,7)]; updated.recurringId=model.id;
+      (data.recurring=data.recurring||[]).push(model);
+    }
     data.transactions=data.transactions.map(t=>t.id===existingId?updated:t);
     logActivity("edit",`Gasto editado: ${base.description}`,`${fmtMoney(base.value)} · ${expenseDestination(updated)}`,existingId,{changes:[{before:structuredClone(old),after:structuredClone(updated)}]});
-    toast("Gasto atualizado");
-  }else if(wantsRecurring){
-    const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
-    const recurring={id:uid(),type:"expense",description:base.description,value,day:Number(startDate.slice(8,10)),startMonth:startDate.slice(0,7),endMonth:endDate?endDate.slice(0,7):"",startDate,endDate,method:base.method,cardId:base.cardId,category:splits[0].category,active:true,generated:[],createdAt:Date.now()};
-    (data.recurring=data.recurring||[]).push(recurring);
+    const count=model?generateRecurring():0;
+    toast(model?(count?`Gasto atualizado · recorrência salva · ${count} lançamento(s) criado(s)`:"Gasto atualizado · recorrência salva"):"Gasto atualizado");
+  }else if(rec){
+    (data.recurring=data.recurring||[]).push(buildRecurringModel("expense",rec,base,recExtra));
     const count=generateRecurring();
-    const rangeLabel=endDate?`até ${fmtDate(endDate)}`:"em diante";
-    logActivity("create",`Gasto recorrente: ${base.description}`,`${fmtMoney(value)} · de ${fmtDate(startDate)} ${rangeLabel}`);
+    logActivity("create",`Gasto recorrente: ${base.description}`,`${fmtMoney(value)} · todo dia ${rec.day} · de ${fmtDate(rec.startDate)} ${rec.endDate?`até ${fmtDate(rec.endDate)}`:"em diante"}`);
     toast(count?`Recorrência salva · ${count} lançamento(s) criado(s)`:"Recorrência salva");
   }else{
     const nt={...base,id:uid(),createdAt:Date.now(),installments:1,installmentNo:1};
@@ -247,12 +286,11 @@ function saveExpenseFromForm(existingId){
 // Valida e salva a entrada do formulário (nova ou edição).
 function saveIncomeFromForm(existingId){
   const f=new FormData($("txForm")),value=Number(f.get("value")||0);
-  const wantsRecurring=!existingId&&$("txRecurring")?.checked;
+  const wantsRecurring=$("txRecurring")?.checked;   // vale também ao editar: o lançamento vira o primeiro da recorrência
   if(!value){askAlert("Informe um valor.");return}
+  let rec=null;
   if(wantsRecurring){
-    const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
-    if(!startDate){askAlert("Informe a data inicial da recorrência.");return}
-    if(endDate&&endDate<startDate){askAlert("A data final não pode ser antes da data inicial.");return}
+    rec=readRecurringFields(f); if(!rec)return;
     if(f.get("incomeSource")==="reimbursement"){askAlert("Reembolsos não podem ser registrados como entradas recorrentes.");return}
   }
   const base={date:f.get("date"),description:f.get("description"),value,type:"income",source:f.get("incomeSource")||"normal"};   // sem "notes": a observação antiga é preservada na edição
@@ -260,16 +298,19 @@ function saveIncomeFromForm(existingId){
   if(existingId){
     const old=data.transactions.find(t=>t.id===existingId);
     const updated={...old,...base};
+    let model=null;
+    if(rec){
+      model=buildRecurringModel("income",rec,base); model.generated=[base.date.slice(0,7)]; updated.recurringId=model.id;
+      (data.recurring=data.recurring||[]).push(model);
+    }
     data.transactions=data.transactions.map(t=>t.id===existingId?updated:t);
     logActivity("edit",`Entrada editada: ${base.description}`,`${fmtMoney(value)} · ${where}`,existingId,{changes:[{before:structuredClone(old),after:structuredClone(updated)}]});
-    toast("Entrada atualizada");
-  }else if(wantsRecurring){
-    const startDate=f.get("recurringStartDate"),endDate=f.get("recurringEndDate")||"";
-    const recurring={id:uid(),type:"income",description:base.description,value,day:Number(startDate.slice(8,10)),startMonth:startDate.slice(0,7),endMonth:endDate?endDate.slice(0,7):"",startDate,endDate,active:true,generated:[],createdAt:Date.now()};
-    (data.recurring=data.recurring||[]).push(recurring);
+    const count=model?generateRecurring():0;
+    toast(model?(count?`Entrada atualizada · recorrência salva · ${count} lançamento(s) criado(s)`:"Entrada atualizada · recorrência salva"):"Entrada atualizada");
+  }else if(rec){
+    (data.recurring=data.recurring||[]).push(buildRecurringModel("income",rec,base));
     const count=generateRecurring();
-    const rangeLabel=endDate?`até ${fmtDate(endDate)}`:"em diante";
-    logActivity("create",`Entrada recorrente: ${base.description}`,`${fmtMoney(value)} · de ${fmtDate(startDate)} ${rangeLabel}`);
+    logActivity("create",`Entrada recorrente: ${base.description}`,`${fmtMoney(value)} · todo dia ${rec.day} · de ${fmtDate(rec.startDate)} ${rec.endDate?`até ${fmtDate(rec.endDate)}`:"em diante"}`);
     toast(count?`Recorrência salva · ${count} lançamento(s) criado(s)`:"Recorrência salva");
   }else{
     const nt={...base,id:uid(),createdAt:Date.now()};

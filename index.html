@@ -31,7 +31,7 @@
 <header class="app-header">
   <div class="topbar">
     <div>
-      <div class="brand"><img class="brand-ico" src="icon-192.png" alt="" width="30" height="30">Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" class="ver">v33</span></div>
+      <div class="brand"><img class="brand-ico" src="icon-192.png" alt="" width="30" height="30">Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" class="ver">v34</span></div>
       <div class="subtitle">Finanças, cartões, parcelas e reembolsos em um só lugar</div>
     </div>
     <div class="top-actions">
@@ -153,10 +153,11 @@
     </details>
 
     <!-- HISTÓRICO de atividades de todos os meses (recolhível) -->
-  <details class="card section">
-      <summary><h2>Últimos lançamentos <span id="activityBadge" class="pill"></span></h2></summary>
-      <div class="muted" style="margin-bottom:6px">Registro do que você fez no app, de todos os meses. Clique num item para ver o lançamento ou use Desfazer para reverter uma ação.</div>
-      <div id="activityList" class="scroll-list"></div>
+  <details class="card section activity-card">
+      <summary><h2>Últimos lançamentos <span data-activity-badge class="pill"></span></h2></summary>
+      <div class="muted" style="margin-bottom:6px">Registro do que você fez no app, de todos os meses. Clique num item para ver o lançamento ou use Desfazer para reverter uma ação. Marque os itens e use "Excluir selecionados" para limpar o histórico (os lançamentos não são apagados).</div>
+      <div class="activity-bar"><label class="select-all"><input type="checkbox" data-activity-all> Selecionar todos</label><button type="button" class="btn danger" data-activity-delete disabled>Excluir selecionados</button></div>
+      <div data-activity-list class="scroll-list"></div>
     </details>
   </section>
 
@@ -164,7 +165,7 @@
   <!-- ===== ABA LANÇAMENTOS ===== -->
   <section id="transactions" class="page hidden">
     <div class="page-head">
-      <div><h1>Lançamentos</h1><p class="muted">Uma compra pode ter várias categorias e várias pessoas pagando partes dela. Use "Selecionar todos" (ou marque um a um) para excluir ou alterar vários lançamentos de uma vez.</p></div>
+      <div><h1>Lançamentos</h1><p class="muted">Uma compra pode ter várias categorias e várias pessoas pagando partes dela.</p></div>
       <div class="row-actions"><button class="btn primary" id="newExpense">Registrar gasto</button><button class="btn" id="newIncome">Registrar entrada</button></div>
     </div>
 
@@ -174,9 +175,6 @@
       <div><label>Buscar</label><input id="txSearch" placeholder="Uber, Mercado, Renner..."></div>
       <div><label>Tipo</label><select id="txType"><option value="">Todos</option><option value="expense">Gastos</option><option value="income">Entradas</option><option value="card_payment">Pagamentos de cartão</option></select></div>
     </article>
-
-    <!-- Selecionar todos os lançamentos que aparecem na lista -->
-    <div class="row-actions select-all-row"><button type="button" class="btn" id="selectAllBtn">☑ Selecionar todos</button></div>
 
     <!-- BARRA DE AÇÕES EM MASSA: aparece quando há lançamentos marcados em "Selecionar" -->
   <div id="bulkBar" class="bulkbar hidden">
@@ -193,6 +191,14 @@
         </table>
       </div>
     </article>
+
+    <!-- HISTÓRICO no fim da aba Lançamentos (o mesmo do Resumo) -->
+    <details class="card section activity-card" open>
+      <summary><h2>Últimos lançamentos <span data-activity-badge class="pill"></span></h2></summary>
+      <div class="muted" style="margin-bottom:6px">Registro do que você fez no app, de todos os meses. Clique num item para ver o lançamento ou use Desfazer para reverter uma ação. Marque os itens e use "Excluir selecionados" para limpar o histórico (os lançamentos não são apagados).</div>
+      <div class="activity-bar"><label class="select-all"><input type="checkbox" data-activity-all> Selecionar todos</label><button type="button" class="btn danger" data-activity-delete disabled>Excluir selecionados</button></div>
+      <div data-activity-list class="scroll-list"></div>
+    </details>
   </section>
 
   <!-- ===== ABA CARTÕES ===== -->
@@ -369,12 +375,12 @@
 
     <details class="card section">
       <summary><h2>Últimos lançamentos</h2></summary>
-      <p>Um registro de tudo que você fez no app: gastos e entradas criados ou editados, pagamentos marcados, reembolsos recebidos, importações e restaurações de backup. Mostra os mais recentes primeiro, de qualquer mês. Toque num item para abrir o lançamento relacionado.</p>
+      <p>Um registro de tudo que você fez no app: gastos e entradas criados ou editados, pagamentos marcados, reembolsos recebidos, importações e restaurações de backup. Mostra os mais recentes primeiro, de qualquer mês. Toque num item para abrir o lançamento relacionado. Ele aparece no Resumo e no fim da aba Lançamentos; marque itens (ou "Selecionar todos") e use "Excluir selecionados" para limpar o histórico.</p>
     </details>
 
     <details class="card section">
       <summary><h2>Aba Lançamentos</h2></summary>
-      <p>Lista completa de gastos e entradas do mês selecionado, com filtros de busca e tipo. Um gasto aparece tanto no mês da compra quanto no mês do pagamento previsto, quando forem diferentes (com uma etiqueta indicando isso). Selecione vários gastos com as caixinhas para definir o pagamento previsto de todos de uma vez.</p>
+      <p>Lista completa de gastos e entradas do mês selecionado, com filtros de busca e tipo. Um gasto aparece tanto no mês da compra quanto no mês do pagamento previsto, quando forem diferentes (com uma etiqueta indicando isso). Selecione vários lançamentos com as caixinhas (a do cabeçalho marca todos) para excluir ou definir o pagamento previsto de todos de uma vez. Ao editar um lançamento, dá para marcar "Repetir mensalmente" e escolher o dia do mês.</p>
     </details>
 
     <details class="card section">

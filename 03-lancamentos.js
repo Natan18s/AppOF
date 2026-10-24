@@ -158,23 +158,12 @@ function toggleSelectAll(e){
   updateBulkBar();
 }
 
-// Botão "Selecionar todos": marca (ou, se já estão todos marcados, desmarca) todos os lançamentos que aparecem na lista.
-function selectAllVisible(){
-  const checks=[...document.querySelectorAll(".tx-check")];
-  if(!checks.length)return;
-  const mark=!checks.every(c=>c.checked);
-  checks.forEach(c=>{c.checked=mark;if(mark)selectedTxIds.add(c.value);else selectedTxIds.delete(c.value)});
-  updateBulkBar();
-}
-
-// Mostra ou esconde a barra de ações em massa conforme há lançamentos selecionados e atualiza os botões de "selecionar todos".
+// Mostra ou esconde a barra de ações em massa conforme há lançamentos selecionados; a caixinha do cabeçalho acompanha as linhas.
 function updateBulkBar(){
   $("selectedCount").textContent=selectedTxIds.size;
   $("bulkBar").classList.toggle("hidden",selectedTxIds.size===0);
-  const checks=[...document.querySelectorAll(".tx-check")], all=checks.length>0&&checks.every(c=>c.checked);
-  $("selectAllTx").checked=all;
-  $("selectAllBtn").classList.toggle("hidden",!checks.length);
-  $("selectAllBtn").textContent=all?"Limpar seleção":`☑ Selecionar todos (${checks.length})`;
+  const checks=[...document.querySelectorAll(".tx-check")];
+  $("selectAllTx").checked=checks.length>0&&checks.every(c=>c.checked);
 }
 
 // Desenha a tabela da aba Lançamentos, aplicando mês, busca e tipo. Um gasto também aparece no mês do pagamento previsto.

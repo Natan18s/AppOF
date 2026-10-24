@@ -101,6 +101,19 @@ test("divisão do gasto: parte sua e parte a receber", () => {
   assert.equal(run('ownAmount(data.transactions[3])'), 0);   // entrada não conta como gasto
 });
 
+test("recorrente: ao mudar o dia, os lançamentos já criados vão para o novo dia (menos os divididos com outras pessoas)", () => {
+  const { run } = novoAmbiente(); run(DADOS);
+  run(`data.recurring=[{id:"r1",type:"income",description:"Salário",value:1790,day:6,startMonth:"2026-11",endMonth:"",active:true,generated:["2026-11","2026-12"]}];
+       data.transactions=[{id:"a",type:"income",recurringId:"r1",date:"2026-11-01",description:"Salário",value:1700},{id:"b",type:"income",recurringId:"r1",date:"2026-12-01",description:"Salário",value:1700}]`);
+  assert.equal(run('applyRecurringToTransactions(data.recurring[0],data.transactions)'), 2);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(data.transactions.map(t=>[t.date,t.value]))')), [["2026-11-06",1790],["2026-12-06",1790]]);
+  run(`data.recurring=[{id:"r2",type:"expense",description:"Aluguel",value:900,day:5,method:"pix",cardId:"",category:"Casa",startMonth:"2026-11",endMonth:"",active:true,generated:["2026-11","2026-12"]}];
+       data.transactions=[{id:"c",type:"expense",recurringId:"r2",date:"2026-11-01",description:"Aluguel",value:800,method:"pix",paymentDate:"2026-11-01",splits:[{id:"s",category:"Casa",amount:800,ownerId:"self"}]},
+                          {id:"d",type:"expense",recurringId:"r2",date:"2026-12-01",description:"Aluguel",value:800,method:"pix",paymentDate:"2026-12-01",splits:[{id:"s1",category:"Casa",amount:400,ownerId:"self"},{id:"s2",category:"Casa",amount:400,ownerId:"p1"}]}]`);
+  assert.equal(run('applyRecurringToTransactions(data.recurring[0],data.transactions)'), 1);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(data.transactions.map(t=>[t.date,t.value,t.paymentDate]))')), [["2026-11-05",900,"2026-11-05"],["2026-12-01",800,"2026-12-01"]]);
+});
+
 test("crédito: o vencimento é calculado pelo fechamento do cartão", () => {
   const { run } = novoAmbiente(); run(DADOS);
   assert.equal(run('nextCardPaymentDate("c1","2026-10-09")'), "2026-10-19");   // antes do fechamento (dia 10): vence neste mês
