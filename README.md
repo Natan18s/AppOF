@@ -19,9 +19,9 @@ Regra do dono: **o menor número de arquivos possível e nenhum com mais de 500 
 ```
 index.html  manifest.json  sw.js  package.json
 app.css
-01-base.js  02-resumo.js  03-lancamentos.js  04-formulario.js  05-cadastros.js  06-extras.js  07-inicio.js
+01-base.js  02-resumo.js  03-lancamentos.js  04-formulario.js  05-cadastros.js  06-extras.js  07-excel.js  08-inicio.js
 icon-192.png  icon-512.png
-calculos.test.js  importacao.test.js  estrutura.test.js
+calculos.test.js  importacao.test.js  excel.test.js  estrutura.test.js
 README.md
 .github/workflows/testes.yml
 ```
@@ -37,7 +37,8 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 | `04-formulario.js` | transaction-form.js (formulário de gasto/entrada, reembolsos) |
 | `05-cadastros.js` | cadastros.js, importer.js |
 | `06-extras.js` | backup.js, recorrentes.js, graficos.js, exportar.js |
-| `07-inicio.js` | demo.js, bloqueio.js, integridade.js, main.js (**sempre o último**) |
+| `07-excel.js` | zip.js, xlsx.js, excel.js (planilha Excel do backup; `sheetModel` = dados da Planilha do mês) |
+| `08-inicio.js` | demo.js, bloqueio.js, integridade.js, main.js (**sempre o último**) |
 
 ## 4. Onde mexer para...
 | Quero mudar... | Arquivo |
@@ -47,13 +48,13 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 | Cabeçalho, abas, cards, botões, formulários | `app.css` (seção base) |
 | Painel, gráficos, impressão, celular (até 680 px) | `app.css` (seção de componentes) |
 | Cálculos, interface ou uma funcionalidade | o arquivo da tabela acima que tem a seção correspondente |
-| Um botão que não faz nada | `07-inicio.js`, seção `main.js` (liga os botões e inicia o app) |
+| Um botão que não faz nada | `08-inicio.js`, seção `main.js` (liga os botões e inicia o app) |
 
 ## 5. Regras de trabalho
 1. **Entrega:** só os arquivos que mudaram, cada um com o **código inteiro** e o **caminho completo** como título (ex.: `05-cadastros.js`, seção `importer.js`). Pacote grande: `.zip` com a pasta pronta para arrastar ao GitHub. Se mover/apagar arquivos, liste os antigos a apagar.
 2. **Versão:** a cada alteração em **qualquer** arquivo do app, aumente em 1 o selo `#appVersion` do `index.html` e diga a nova versão. **Não** mexa no `sw.js` por isso: o app revalida na internet e usa o cache só sem conexão. Mexa no `sw.js` apenas se criar/remover arquivo (lista `FILES`) ou mudar o próprio service worker.
 3. **Limite de 500 linhas por arquivo** (código, estilos, testes e este documento). Passou? Divida em seções/arquivos novos. Antes de criar um arquivo, veja se cabe num existente; apague o que ficar sem uso. O `estrutura.test.js` confere o limite.
-4. **Arquivo novo** de código: inclua no `index.html` (na ordem certa; `07-inicio.js` continua por último) e na lista `FILES` do `sw.js`. O `estrutura.test.js` avisa se esquecer o `sw.js`.
+4. **Arquivo novo** de código: inclua no `index.html` (na ordem certa; `08-inicio.js` continua por último) e na lista `FILES` do `sw.js`. O `estrutura.test.js` avisa se esquecer o `sw.js`.
 5. **Scripts clássicos e globais** (o HTML usa `onclick="..."`): sem módulos; **não repita** nomes de `const`/`let`/`function` entre arquivos.
 6. **Dados:** formato novo exige migração em `loadData`/`normalizeTransaction` (seção `storage.js`). Campo novo em `data`: inclua em `defaultData` (seção `config.js`), em `loadData` e em `applyBackup` (seção `backup.js`, copia campo a campo), senão some ao restaurar backup.
 7. **Sem `confirm()`/`alert()`** do navegador: use `askConfirm()`/`askAlert()` (seção `ui.js`). Também sem a lista nativa do `<select>`: o app abre a própria (`openSelectSheet`, seção `ui.js`); o CSS desliga o toque direto no `<select>` (`pointer-events:none`) e o toque é achado pela posição. Campo de escolha novo funciona sozinho, sem código extra.
@@ -81,6 +82,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 9. **v32:** redesenho visual no estilo Apple (só estilo; funcionalidades iguais). Ícone do app no cabeçalho, ícones SVG nas abas, cores da barra do navegador e `manifest.json` atualizados.
 10. **v33:** forma "Parcelado" retirada (parcelas = recorrência no crédito; antigos viraram Crédito); formas de pagamento em ordem Pix, Dinheiro, Débito, Crédito; crédito sem campo de data (vencimento automático pelo fechamento); categorias com "Outros" por último e lista abrindo no topo; botão "Selecionar todos"; ajuste de espaçamento do cartão de boas-vindas.
 11. **v34:** recorrência com campo "Todo dia" (antes o dia vinha só da data inicial e o app gravava dia 1); editar recorrente atualiza os já criados; card "Repetir mensalmente" também ao editar; divisão do gasto totalmente automática (sem "Dividir igualmente"); "Últimos lançamentos" com caixinhas e botão Excluir selecionados, também no fim da aba Lançamentos; removido o botão azul "Selecionar todos" (vale a caixinha do cabeçalho, que agora aparece no celular); `demo.js` passou para o `07-inicio.js` (o `06-extras.js` passaria de 500 linhas).
+12. **v35:** planilha Excel do backup (uma aba por mês no formato da Planilha do mês + aba escondida de dados) e restauração por `.xlsx` ou `.json`; "Compartilhar" envia Excel + backup juntos; ao restaurar, o campo de arquivo só é limpo depois de ler o arquivo (no Android limpar antes podia impedir a leitura) e o aviso mostra o motivo do erro; arquivo novo `07-excel.js` (o antigo `07-inicio.js` virou `08-inicio.js`) e `excel.test.js`.
 
 ## 6. Funcionalidades
 
@@ -110,7 +112,7 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 
 **Importar**
 - Extrato/fatura **CSV ou OFX**: prévia com **tipo por linha** (Gasto / Entrada / Fatura), botão "Inverter gasto ↔ entrada em todas", cartão da fatura, linhas repetidas ignoradas.
-- **Backup**: baixar arquivo, compartilhar, copiar/colar e restaurar.
+- **Backup**: baixar a **planilha Excel** (`.xlsx`: uma aba por mês no mesmo formato da "Planilha do mês" + aba escondida "Dados do app" com todos os dados), baixar o backup `.json`, compartilhar os dois (menu do aparelho), copiar/colar e restaurar. "Restaurar de um arquivo" (e soltar o arquivo na área de Importar) aceita o `.xlsx` gerado pelo app (lê a aba "Dados do app"; funciona também se o Excel regravar o arquivo) ou o `.json`. Editar as abas dos meses no Excel não altera o que é restaurado: vale a aba "Dados do app".
 - **Relatórios**: CSV do mês ou de tudo; imprimir/salvar PDF do Resumo.
 - **Segurança**: bloqueio por **PIN** (4 a 8 números) e **Verificar dados** (acha e corrige inconsistências seguras).
 - **Modo demonstração**: dados fictícios; os reais ficam guardados à parte e voltam ao sair.
@@ -180,7 +182,7 @@ data = {
 - Orçamento: o gasto contado é só o que é seu (`ownerId:"self"`) na categoria, pelo mês do pagamento. Verde < 80%, atenção de 80% a 99%, estourado a partir de 100%. Limite vazio ou 0 = sem orçamento.
 - Recorrentes: ao abrir o app (e ao voltar para ele) são criados os meses que faltam, do mês inicial até o mês seguinte ao atual (`RECURRING_HORIZON`). Gasto recorrente tem uma parte só, sua; crédito vence pelo fechamento do cartão (como no formulário); Pix/débito/dinheiro no futuro ficam "previsto". Mudar o modelo vale só para meses ainda não criados.
 - Modo demonstração: `startDemo` guarda os dados reais em `meu-controle-v2-real` e carrega dados fictícios; `exitDemo` devolve os reais. Restaurar backup fica bloqueado durante a demonstração.
-- Backup: `applyBackup` copia campo a campo; ao criar um campo novo em `data`, inclua-o lá e em `loadData`.
+- Backup: `applyBackup` copia campo a campo; ao criar um campo novo em `data`, inclua-o lá e em `loadData`. A planilha Excel (`07-excel.js`) guarda o `data` inteiro como JSON na aba escondida "Dados do app" (em pedaços de 30 mil caracteres), então campo novo entra sozinho; as abas dos meses usam `sheetModel`, a mesma função da tela. O .xlsx é criado sem biblioteca (zip sem compactação) e lido com `DecompressionStream` (navegador atual).
 - Importação de extrato (seção `importer.js`, arquivo `05-cadastros.js`): o sinal que aparece na MAIORIA das linhas (sem contar "pagamento recebido") é o gasto: no CSV do Nubank as compras são positivas; em OFX de cartão e extratos de conta são negativas; empate = positivo é gasto. Linhas do sentido contrário viram entrada/estorno; "pagamento recebido/payment" vira pagamento de fatura. A prévia deixa trocar o tipo de cada linha e inverter todas. O CSV usa o separador da primeira linha (`;`, tabulação ou `,`), pois bancos brasileiros usam `;` com vírgula decimal. Se um arquivo traz como gasto linhas que uma importação antiga gravou como entrada ("Crédito importado", `source:"imported-credit"`), o app pergunta se pode apagá-las (cópia em `localStorage`, chave `meu-controle-importacao-removida`) e importar de novo como gasto.
 - PIN: a configuração fica na chave `meu-controle-lock` (fora dos dados e do backup: restaurar backup não troca o PIN). Um script no `<head>` põe a classe `locked` no `<html>` antes de a página aparecer. Depois de 5 erros seguidos há espera (30 s, 60 s...). Não há recuperação: "Esqueci o PIN" apaga os dados do aparelho. O PIN barra o uso do app, mas os dados no localStorage NÃO são criptografados.
 - Valores: ao carregar, `cleanFloat` (`storage.js`) remove ruído de ponto flutuante (0,30000000000000004 -> 0,30); valores com 3+ casas de verdade são apontados por "Verificar dados".

@@ -375,10 +375,10 @@ async function handleFile(file){
   if(!file)return;
   selectedImport=file;$("selectedFile").textContent=`Selecionado: ${file.name}`;
   $("importStatus").classList.add("hidden");
-  // Backup do próprio app (.json) solto aqui: restaura direto, em vez de tentar ler como extrato do banco
-  if(/\.json$/i.test(file.name)||file.type==="application/json"){
-    let parsed=null;
-    try{ parsed=JSON.parse(await file.text()) }catch{}
+  // Backup do próprio app (.xlsx ou .json) solto aqui: restaura direto, em vez de tentar ler como extrato do banco
+  if(/\.(json|xlsx)$/i.test(file.name)||file.type==="application/json"||file.type===XLSX_MIME){
+    let parsed=null, why="";
+    try{ parsed=await backupFromBytes(new Uint8Array(await file.arrayBuffer())) }catch(e){ why=e&&e.message?e.message:"" }
     if(parsed && Array.isArray(parsed.transactions) && Array.isArray(parsed.cards) && Array.isArray(parsed.people)){
       if(await applyBackup(parsed,"arquivo solto em Importar")){
         $("importStatus").textContent="Esse arquivo era um backup do próprio app — os dados foram restaurados direto, sem passar pela importação de extrato.";
@@ -387,7 +387,7 @@ async function handleFile(file){
       selectedImport=null;$("selectedFile").textContent="Nenhum arquivo selecionado";
       return;
     }
-    $("importStatus").textContent="Esse .json não tem o formato de um extrato nem de um backup deste app.";
+    $("importStatus").textContent=why||"Esse arquivo não tem o formato de um extrato nem de um backup deste app.";
     $("importStatus").classList.remove("hidden");
     return;
   }

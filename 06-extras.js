@@ -17,11 +17,14 @@ function exportBackup(){
   markBackedUp();toast("Backup exportado");
 }
 
-// Abre o menu de compartilhar do aparelho com o arquivo de backup (ou baixa, se não houver suporte).
+// Abre o menu de compartilhar do aparelho com a planilha Excel e o backup .json juntos (ou só um deles, ou baixa, se não houver suporte).
 async function shareBackup(){
   try{
-    const file=new File([backupPayload()],`meu-controle-backup-${today()}.json`,{type:"application/json"});
-    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:"Backup Meu Controle"}); markBackedUp(); return }
+    const json=new File([backupPayload()],`meu-controle-backup-${today()}.json`,{type:"application/json"}), xlsx=backupXlsxFile();
+    const tries=[xlsx?[xlsx,json]:null,[json]].filter(Boolean);
+    for(const files of tries){
+      if(navigator.canShare && navigator.canShare({files})){ await navigator.share({files,title:"Backup Meu Controle"}); markBackedUp(); return }
+    }
   }catch(e){ if(e && e.name==="AbortError") return }
   exportBackup();   // sem suporte a compartilhamento de arquivo: cai para o download normal
 }
@@ -67,17 +70,14 @@ async function applyBackup(x,sourceLabel){
   return true;
 }
 
-// Restaura a partir de um arquivo .json escolhido.
-function restoreBackup(){
-  const f=$("backupInput").files[0];if(!f)return;
-  const reader=new FileReader();
-  reader.onload=async()=>{
-    try{ await applyBackup(JSON.parse(reader.result),"arquivo") }
-    catch(e){ askAlert("Não consegui ler esse arquivo como backup. Confira se é o .json exportado pelo próprio app.") }
-  };
-  reader.onerror=()=>askAlert("Não consegui abrir esse arquivo.");
-  reader.readAsText(f);
-  $("backupInput").value="";
+// Restaura a partir de um arquivo escolhido: planilha .xlsx gerada pelo app ou backup .json.
+async function restoreBackup(){
+  const input=$("backupInput"), f=input.files[0]; if(!f)return;
+  try{
+    const bytes=new Uint8Array(await f.arrayBuffer());   // lê tudo ANTES de limpar o campo (no Android, limpar antes pode invalidar o arquivo)
+    input.value="";
+    await applyBackup(await backupFromBytes(bytes),"arquivo");
+  }catch(e){ input.value=""; askAlert("Não consegui restaurar esse arquivo.\n"+(e&&e.message?e.message:"Tente de novo ou use o texto do backup.")) }
 }
 
 // Restaura a partir do texto colado.

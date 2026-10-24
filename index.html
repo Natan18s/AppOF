@@ -9,13 +9,13 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <!-- Estilos agrupados: tema -> estrutura geral -> componentes (a ordem importa). -->
 <link rel="stylesheet" href="app.css">
-<!-- Se houver PIN ativado, marca o app como bloqueado ANTES de a página aparecer (seção bloqueio.js (arquivo 07-inicio.js) cuida do resto). -->
+<!-- Se houver PIN ativado, marca o app como bloqueado ANTES de a página aparecer (seção bloqueio.js (arquivo 08-inicio.js) cuida do resto). -->
 <script>try{if(JSON.parse(localStorage.getItem("meu-controle-lock")||"null").hash)document.documentElement.classList.add("locked")}catch(e){}</script>
 <!-- Aplica o tema salvo ANTES de a página aparecer (evita piscar). Padrão: modo claro. -->
 <script>(function(){try{var t=localStorage.getItem("meu-controle-theme");if(t!=="dark")t="light";document.documentElement.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=t==="dark"?"#000000":"#f2f2f7"}catch(e){}})()</script>
 </head>
 <body>
-<!-- TELA DE BLOQUEIO: só aparece quando o PIN está ativado e o app está bloqueado (seção bloqueio.js (arquivo 07-inicio.js)) -->
+<!-- TELA DE BLOQUEIO: só aparece quando o PIN está ativado e o app está bloqueado (seção bloqueio.js (arquivo 08-inicio.js)) -->
 <div id="lockScreen" class="lock-screen" role="dialog" aria-modal="true" aria-label="App bloqueado">
   <form id="lockForm" class="lock-box" autocomplete="off">
     <div class="lock-ico" aria-hidden="true">🔒</div>
@@ -31,7 +31,7 @@
 <header class="app-header">
   <div class="topbar">
     <div>
-      <div class="brand"><img class="brand-ico" src="icon-192.png" alt="" width="30" height="30">Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" class="ver">v34</span></div>
+      <div class="brand"><img class="brand-ico" src="icon-192.png" alt="" width="30" height="30">Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" class="ver">v35</span></div>
       <div class="subtitle">Finanças, cartões, parcelas e reembolsos em um só lugar</div>
     </div>
     <div class="top-actions">
@@ -254,7 +254,7 @@
     <div class="grid-2">
       <article class="card">
         <h2>Importar arquivo</h2>
-        <p class="muted">Arraste um CSV/OFX para a área ou selecione pelo aparelho. Se soltar aqui um backup .json do próprio app, ele é restaurado direto, sem precisar da aba de backup.</p>
+        <p class="muted">Arraste um CSV/OFX para a área ou selecione pelo aparelho. Se soltar aqui um backup do próprio app (.xlsx ou .json), ele é restaurado direto, sem precisar da aba de backup.</p>
         <div style="margin-bottom:10px">
           <label>Cartão da fatura (para CSV)</label>
           <select id="importCard"><option value="">Detectar pelo arquivo OFX / deixar sem cartão</option></select>
@@ -280,12 +280,13 @@
         <h2>Exportar / backup</h2>
         <p class="muted">Os dados continuam salvos no navegador. Faça backup para não depender de um único aparelho.</p>
         <div class="row-actions">
-          <button class="btn primary" id="exportBackup">Baixar arquivo de backup</button>
-          <button class="btn" id="shareBackup">Compartilhar backup</button>
+          <button class="btn primary" id="exportExcel">📊 Baixar planilha Excel</button>
+          <button class="btn" id="exportBackup">Baixar backup (.json)</button>
+          <button class="btn" id="shareBackup">Compartilhar (Excel + backup)</button>
           <button class="btn" id="restoreBackup">Restaurar de um arquivo</button>
         </div>
-        <input id="backupInput" type="file" class="hidden-file" aria-label="Arquivo de backup">
-        <div class="field-note">"Compartilhar" abre o menu de compartilhamento do aparelho (Drive, WhatsApp, Arquivos...), sem precisar depois procurar o arquivo baixado.</div>
+        <input id="backupInput" type="file" class="hidden-file" aria-label="Arquivo de backup (.xlsx ou .json)">
+        <div class="field-note">A <b>planilha Excel</b> tem uma aba por mês, no mesmo formato da "Planilha do mês" do Resumo, e abre no Excel ou no Planilhas Google. Uma aba escondida chamada "Dados do app" guarda tudo para restaurar: não apague essa aba. "Restaurar de um arquivo" aceita essa planilha (.xlsx) ou o backup .json. "Compartilhar" abre o menu do aparelho (Drive, WhatsApp, Arquivos...) com os dois arquivos, sem precisar procurar o que foi baixado.</div>
 
         <hr>
         <h3>Copiar e colar (mais fácil entre celular e PC)</h3>
@@ -424,8 +425,8 @@
 
     <details class="card section">
       <summary><h2>Importar e backup</h2></summary>
-      <p><b>Importar arquivo</b> — leia um extrato CSV ou OFX do banco, com prévia antes de confirmar. Se você soltar aqui um backup .json do próprio app, ele é restaurado direto, sem tentar ler como extrato.</p>
-      <p><b>Backup</b> — baixe, compartilhe ou copie seus dados como texto para levar a outro aparelho. "Restaurar" substitui tudo o que está no aparelho atual, então confirme antes.</p>
+      <p><b>Importar arquivo</b> — leia um extrato CSV ou OFX do banco, com prévia antes de confirmar. Se você soltar aqui um backup do próprio app (.xlsx ou .json), ele é restaurado direto, sem tentar ler como extrato.</p>
+      <p><b>Backup</b> — baixe a planilha Excel (uma aba por mês, no formato da Planilha do mês), o backup .json, compartilhe os dois ou copie os dados como texto para levar a outro aparelho. Para restaurar, escolha a planilha .xlsx gerada pelo app (não apague a aba escondida "Dados do app") ou o .json. "Restaurar" substitui tudo o que está no aparelho atual, então confirme antes.</p>
     </details>
   </section>
 
@@ -442,14 +443,15 @@
 <!-- AVISO RÁPIDO (toast) no canto da tela -->
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<!-- Scripts do app, em ordem de carregamento (não mude a ordem; 07-inicio.js é sempre o último). Arquivo novo: inclua aqui e na lista FILES do sw.js. -->
+<!-- Scripts do app, em ordem de carregamento (não mude a ordem; 08-inicio.js é sempre o último). Arquivo novo: inclua aqui e na lista FILES do sw.js. -->
 <script src="01-base.js"></script>
 <script src="02-resumo.js"></script>
 <script src="03-lancamentos.js"></script>
 <script src="04-formulario.js"></script>
 <script src="05-cadastros.js"></script>
 <script src="06-extras.js"></script>
-<script src="07-inicio.js"></script>
+<script src="07-excel.js"></script>
+<script src="08-inicio.js"></script>
 <!-- Registra o service worker (permite instalar o app no celular e abrir sem internet) -->
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>
 </body>

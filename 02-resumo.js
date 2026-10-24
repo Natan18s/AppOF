@@ -397,43 +397,23 @@ function sheetRowClick(id){ if(sheetDragMoved)return; goToTransaction(id); }
 // Cada categoria tem uma cor (clara/escura alternadas) e pode ser arrastada para mudar a ordem (sheet-drag.js).
 function renderSheet(){
   const box=$("sheetView"); if(!box)return;
-  const sched=scheduledPaymentsForMonth(month);
-  const incomes=txForMonth(month).filter(t=>t.type==="income");
-  if(!sched.length&&!incomes.length){ box.innerHTML='<div class="empty">Sem lançamentos neste mês.</div>'; return; }
-
-  // 1) Despesas agrupadas por categoria (cada divisão do gasto entra na sua categoria, pelo valor cheio)
-  const byCat={};
-  sched.forEach(t=>(t.splits||[]).forEach(s=>{ (byCat[s.category]=byCat[s.category]||[]).push({t,s}); }));
-  const cats=[...data.categories.filter(c=>byCat[c]),...Object.keys(byCat).filter(c=>!data.categories.includes(c))];   // segue a ordem da aba Categorias
-  let totalOut=0, html="";
-  cats.forEach((cat,gi)=>{
-    const items=byCat[cat].sort((a,b)=>(a.t.paymentDate||a.t.date).localeCompare(b.t.paymentDate||b.t.date)||a.t.description.localeCompare(b.t.description,"pt-BR"));
-    const sub=items.reduce((sum,x)=>sum+Number(x.s.amount||0),0); totalOut+=sub;
-    items.forEach(({t,s},i)=>{
-      const pd=t.paymentDate||t.date, par=t.installments>1?` ${t.installmentNo||1}/${t.installments}`:"";
-      const who=s.ownerId!=="self"?` <span class="tag">${esc(data.people.find(p=>p.id===s.ownerId)?.name||"Outra pessoa")}</span>`:"";
-      html+=`<tr class="sheet-row sheet-g${gi%2}" data-g="${esc(cat)}"${i===0?" data-gfirst":""} onclick="sheetRowClick('${t.id}')" title="Ver em Lançamentos">${i===0?`<td class="sheet-cat" rowspan="${items.length}" data-cat="${esc(cat)}" onclick="event.stopPropagation()" title="Segure e arraste para mudar a ordem"><span class="grip">⠿</span> ${esc(cat)}<div class="sheet-cat-sub">${fmtMoney(sub)}</div></td>`:""}<td>${esc(t.description)}${par}${who}</td><td class="sheet-date">${shortDate(pd)}${t.paymentStatus==="paid"?' <span class="positive" title="Já pago">✓</span>':""}</td><td class="right">${fmtMoney(s.amount)}</td>${i===0?`<td class="sheet-sub right" rowspan="${items.length}">${fmtMoney(sub)}</td>`:""}</tr>`;
+  const model=sheetModel(month);
+  if(!model){ box.innerHTML='<div class="empty">Sem lançamentos neste mês.</div>'; return; }
+  let html="";
+  model.out.forEach((g,gi)=>{
+    g.items.forEach((x,i)=>{
+      const who=x.who?` <span class="tag">${esc(x.who)}</span>`:"";
+      html+=`<tr class="sheet-row sheet-g${gi%2}" data-g="${esc(g.name)}"${i===0?" data-gfirst":""} onclick="sheetRowClick('${x.id}')" title="Ver em Lançamentos">${i===0?`<td class="sheet-cat" rowspan="${g.items.length}" data-cat="${esc(g.name)}" onclick="event.stopPropagation()" title="Segure e arraste para mudar a ordem"><span class="grip">⠿</span> ${esc(g.name)}<div class="sheet-cat-sub">${fmtMoney(g.sub)}</div></td>`:""}<td>${esc(x.description)}${x.par}${who}</td><td class="sheet-date">${shortDate(x.date)}${x.paid?' <span class="positive" title="Já pago">✓</span>':""}</td><td class="right">${fmtMoney(x.amount)}</td>${i===0?`<td class="sheet-sub right" rowspan="${g.items.length}">${fmtMoney(g.sub)}</td>`:""}</tr>`;
     });
   });
-  html+=`<tr class="sheet-total sheet-out"><td colspan="3">Total gasto no mês</td><td colspan="2" class="right">${fmtMoney(totalOut)}</td></tr>`;
-
-  // 2) Entradas em três grupos: salário/normais, extras (reembolsos) e devolução de empréstimos
-  const groups=[["normal","Entradas do salário e outras"],["reimb","Entradas extras (reembolsos)"],["loan","Entradas de empréstimos cedidos"]];
-  let totalIn=0, gj=0;
-  groups.forEach(([key,label])=>{
-    const items=incomes.filter(t=>incomeOrigin(t)===key).sort((a,b)=>a.date.localeCompare(b.date)||a.description.localeCompare(b.description,"pt-BR"));
-    if(!items.length)return;
-    const sub=items.reduce((sum,t)=>sum+t.value,0); totalIn+=sub;
-    items.forEach((t,i)=>{
-      html+=`<tr class="sheet-row sheet-in-g${gj%2}" onclick="sheetRowClick('${t.id}')" title="Ver em Lançamentos">${i===0?`<td class="sheet-cat sheet-cat-in" rowspan="${items.length}">${label}<div class="sheet-cat-sub">${fmtMoney(sub)}</div></td>`:""}<td>${esc(t.description)}</td><td class="sheet-date">${shortDate(t.date)}</td><td class="right">${fmtMoney(t.value)}</td>${i===0?`<td class="sheet-sub right" rowspan="${items.length}">${fmtMoney(sub)}</td>`:""}</tr>`;
+  html+=`<tr class="sheet-total sheet-out"><td colspan="3">Total gasto no mês</td><td colspan="2" class="right">${fmtMoney(model.totalOut)}</td></tr>`;
+  model.inc.forEach((g,gj)=>{
+    g.items.forEach((x,i)=>{
+      html+=`<tr class="sheet-row sheet-in-g${gj%2}" onclick="sheetRowClick('${x.id}')" title="Ver em Lançamentos">${i===0?`<td class="sheet-cat sheet-cat-in" rowspan="${g.items.length}">${g.name}<div class="sheet-cat-sub">${fmtMoney(g.sub)}</div></td>`:""}<td>${esc(x.description)}</td><td class="sheet-date">${shortDate(x.date)}</td><td class="right">${fmtMoney(x.amount)}</td>${i===0?`<td class="sheet-sub right" rowspan="${g.items.length}">${fmtMoney(g.sub)}</td>`:""}</tr>`;
     });
-    gj++;
   });
-  html+=`<tr class="sheet-total sheet-in"><td colspan="3">Soma das entradas</td><td colspan="2" class="right">${fmtMoney(totalIn)}</td></tr>`;
-
-  // 3) Saldo do mês = entradas - total gasto (valores cheios, como na planilha)
-  const bal=totalIn-totalOut;
-  html+=`<tr class="sheet-total sheet-bal"><td colspan="3">Saldo do mês</td><td colspan="2" class="right">${fmtMoney(bal)}</td></tr>`;
+  html+=`<tr class="sheet-total sheet-in"><td colspan="3">Soma das entradas</td><td colspan="2" class="right">${fmtMoney(model.totalIn)}</td></tr>`;
+  html+=`<tr class="sheet-total sheet-bal"><td colspan="3">Saldo do mês</td><td colspan="2" class="right">${fmtMoney(model.bal)}</td></tr>`;
 
   box.innerHTML=`<div class="table-wrap sheet"><table class="sheet-table"><thead><tr><th>Categoria</th><th>Despesas e descrição</th><th>Pagamento previsto</th><th class="right">Valor previsto (R$)</th><th class="right sheet-th-sub">Soma por categoria</th></tr></thead><tbody>${html}</tbody></table></div><div class="field-note">💡 Segure uma categoria por meio segundo e arraste para mudar a ordem (a mesma ordem da aba Categorias). Os valores são cheios (incluem a parte de outras pessoas, marcada com o nome); por isso o Saldo do mês aqui pode ser menor que o "Saldo previsto" do topo. ✓ = já pago.</div>`;
   initSheetDrag(box);   // liga o "segurar e arrastar" nas categorias (sheet-drag.js)

@@ -8,7 +8,7 @@ const FILES=[
   "./","./index.html","./manifest.json",
   "./icon-192.png","./icon-512.png",
   "./app.css",
-  "./01-base.js","./02-resumo.js","./03-lancamentos.js","./04-formulario.js","./05-cadastros.js","./06-extras.js","./07-inicio.js"
+  "./01-base.js","./02-resumo.js","./03-lancamentos.js","./04-formulario.js","./05-cadastros.js","./06-extras.js","./07-excel.js","./08-inicio.js"
 ];
 // Instalação: baixa e guarda todos os arquivos da lista
 // ("reload" ignora a cópia temporária do navegador, para guardar sempre a versão mais nova do servidor)
