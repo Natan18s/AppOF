@@ -83,15 +83,16 @@ Os scripts são clássicos e carregados na ordem dos números. Cada arquivo reú
 10. **v33:** forma "Parcelado" retirada (parcelas = recorrência no crédito; antigos viraram Crédito); formas de pagamento em ordem Pix, Dinheiro, Débito, Crédito; crédito sem campo de data (vencimento automático pelo fechamento); categorias com "Outros" por último e lista abrindo no topo; botão "Selecionar todos"; ajuste de espaçamento do cartão de boas-vindas.
 11. **v34:** recorrência com campo "Todo dia" (antes o dia vinha só da data inicial e o app gravava dia 1); editar recorrente atualiza os já criados; card "Repetir mensalmente" também ao editar; divisão do gasto totalmente automática (sem "Dividir igualmente"); "Últimos lançamentos" com caixinhas e botão Excluir selecionados, também no fim da aba Lançamentos; removido o botão azul "Selecionar todos" (vale a caixinha do cabeçalho, que agora aparece no celular); `demo.js` passou para o `07-inicio.js` (o `06-extras.js` passaria de 500 linhas).
 12. **v35:** planilha Excel do backup (uma aba por mês no formato da Planilha do mês + aba escondida de dados) e restauração por `.xlsx` ou `.json`; "Compartilhar" envia Excel + backup juntos; ao restaurar, o campo de arquivo só é limpo depois de ler o arquivo (no Android limpar antes podia impedir a leitura) e o aviso mostra o motivo do erro; arquivo novo `07-excel.js` (o antigo `07-inicio.js` virou `08-inicio.js`) e `excel.test.js`.
+13. **v36:** Planilha do mês com total de saídas, gasto realmente seu e os dois saldos correspondentes; Planilha movida para logo após Empréstimos cedidos; detalhes clicáveis nos valores de empréstimos e nas barras de saídas pagas/não pagas.
 
 ## 6. Funcionalidades
 
 **Resumo** (aba inicial)
 - 4 cards no topo (entradas, saídas previstas, gasto realmente seu, saldo previsto), clicáveis: abrem a lista de lançamentos do mês.
-- **Planilha do mês**: despesas por categoria (valor cheio, na ordem escolhida), entradas e saldo; categorias podem ser arrastadas (segurar e arrastar).
+- **Planilha do mês**: despesas por categoria (valor cheio, na ordem escolhida), total de saídas, gasto realmente seu, entradas e dois saldos; categorias podem ser arrastadas (segurar e arrastar).
 - **Gráficos**: "Últimos 6 meses" (entradas x gasto seu x saldo, com paginação de um mês por vez; tocar numa barra seleciona o mês) e rosca com a distribuição das saídas do mês.
 - **Orçamento do mês**: barra por categoria com limite (verde, atenção, estourado).
-- Saídas pagas x previstas, fluxo de caixa, pendências de reembolso e empréstimos cedidos. Linhas dos painéis são clicáveis e abrem o lançamento destacado em Lançamentos (pendências de reembolso também; o botão de ação continua separado).
+- Saídas pagas x não pagas (barras clicáveis com os lançamentos detalhados), fluxo de caixa e pendências de reembolso. Os dois valores de Empréstimos cedidos também abrem os registros que os compõem; as linhas dos painéis levam ao lançamento em Lançamentos.
 - Selo de versão do app no cabeçalho (`vNN`).
 
 **Lançamentos**

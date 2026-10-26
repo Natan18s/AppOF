@@ -252,6 +252,7 @@ details.card summary .pill{font-weight:600}
 .scroll-list{max-height:340px;overflow:auto;overscroll-behavior:contain}
 .loan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .loan-box{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px}
+.loan-box-clickable{cursor:pointer;transition:background .15s ease,transform .15s ease}.loan-box-clickable:hover,.loan-box-clickable:focus-visible{background:var(--hover);outline:2px solid var(--ring);outline-offset:1px}.loan-box-clickable:active{transform:scale(.99)}
 .loan-box span{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
 .loan-box strong{font-size:19px}
 .cashflow-link{cursor:pointer}.cashflow-link:hover b{text-decoration:underline}
@@ -390,7 +391,7 @@ tr.sheet-dragging td{opacity:.35}
   .tx-table td.select-col{position:absolute;grid-column:auto;grid-row:auto;left:12px;top:14px;display:block;width:auto;padding:0}   /* grid-column:auto: sem isso a caixa ficava dentro da área da grade e cobria o nome */
   .tx-table td.empty{display:block;text-align:center}
   .c-empty{display:none!important}
-  /* Planilha do mês no celular: sem coluna lateral; o subtotal aparece embaixo do nome da categoria */
+   /* Planilha do mês no celular: sem coluna lateral; o subtotal aparece embaixo do nome da categoria */
   .sheet-table{min-width:0}
   .sheet-table th,.sheet-table td{padding:7px 6px;font-size:12px}
   .sheet-sub,.sheet-th-sub{display:none}
@@ -467,4 +468,3 @@ tr.sheet-dragging td{opacity:.35}
 }
 .card-head .btn{white-space:nowrap}
 @media(max-width:700px){.recur-row{flex-direction:column;align-items:stretch}.recur-row .row-actions{justify-content:flex-start}}
-

@@ -31,7 +31,7 @@
 <header class="app-header">
   <div class="topbar">
     <div>
-      <div class="brand"><img class="brand-ico" src="icon-192.png" alt="" width="30" height="30">Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" class="ver">v35</span></div>
+      <div class="brand"><img class="brand-ico" src="icon-192.png" alt="" width="30" height="30">Meu Controle <!-- VERSÃO DO APP: aumente este número em 1 a cada alteração em qualquer arquivo do app. Aparece no cabeçalho (inclusive no celular). --><span id="appVersion" title="Versão do app" class="ver">v38</span></div>
       <div class="subtitle">Finanças, cartões, parcelas e reembolsos em um só lugar</div>
     </div>
     <div class="top-actions">
@@ -96,19 +96,26 @@
         <div class="card-head"><h2>Empréstimos cedidos</h2></div>
         <div class="muted" style="margin-bottom:6px">Dinheiro emprestado a outras pessoas, categoria "Empréstimos cedidos".</div>
         <div class="loan-grid">
-          <div class="loan-box">
+          <div class="loan-box loan-box-clickable" role="button" tabindex="0" title="Ver os empréstimos que compõem este valor" onclick="showLoanDetail('receivable')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showLoanDetail('receivable')}">
             <span>A receber neste mês</span>
             <strong id="mLoanReceivable" class="warning">R$ 0,00</strong>
-            <div class="field-note">Previsto para este mês, mas ainda não é certo que vai entrar.</div>
+            <div class="field-note">Previsto para este mês, mas ainda não é certo que vai entrar. Toque para ver os registros.</div>
           </div>
-          <div class="loan-box">
+          <div class="loan-box loan-box-clickable" role="button" tabindex="0" title="Ver os empréstimos registrados neste valor" onclick="showLoanDetail('given')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showLoanDetail('given')}">
             <span>Emprestado neste mês</span>
             <strong id="mLoanGiven" class="negative">R$ 0,00</strong>
-            <div class="field-note">Dinheiro cedido a outras pessoas neste mês.</div>
+            <div class="field-note">Dinheiro cedido a outras pessoas neste mês. Toque para ver os registros.</div>
           </div>
         </div>
       </article>
     </div>
+
+    <!-- PLANILHA DO MÊS (recolhível): despesas por categoria, entradas e saldo, no formato da planilha de controle -->
+   <details class="card section" open>
+      <summary><h2>📋 Planilha do mês</h2></summary>
+      <div class="muted" style="margin:6px 0 8px">Despesas por categoria (com o pagamento previsto), depois as entradas e o saldo do mês. Toque numa linha para ver o lançamento. Segure uma categoria e arraste para mudar a ordem.</div>
+      <div id="sheetView"></div>
+    </details>
 
     <!-- GRÁFICOS: últimos 6 meses e distribuição das saídas do mês (seção graficos.js (arquivo 06-extras.js)) -->
     <div class="grid-2 section">
@@ -125,15 +132,9 @@
     <!-- SAÍDAS PREVISTAS: pagas x não pagas -->
   <article class="card section">
       <div class="card-head"><div><h2>Saídas previstas: pagas x não pagas</h2></div></div>
+      <div class="muted" style="margin-bottom:6px">Toque em uma barra para ver os lançamentos incluídos no valor.</div>
       <div id="paymentStatusBars"></div>
     </article>
-
-    <!-- PLANILHA DO MÊS (recolhível): despesas por categoria, entradas e saldo, no formato da planilha de controle -->
-  <details class="card section" open>
-      <summary><h2>📋 Planilha do mês</h2></summary>
-      <div class="muted" style="margin:6px 0 8px">Despesas por categoria (com o pagamento previsto), depois as entradas e o saldo do mês. Toque numa linha para ver o lançamento. Segure uma categoria e arraste para mudar a ordem.</div>
-      <div id="sheetView"></div>
-    </details>
 
     <!-- FLUXO DE CAIXA do mês (recolhível) -->
   <details class="card section">
@@ -344,7 +345,7 @@
       <p><b>Saídas previstas no mês</b> — valor cheio de tudo que está previsto para ser pago neste mês (faturas de cartão, por exemplo), mesmo a parte que outras pessoas te devem. Não é só o seu gasto, é o total que sai da sua conta quando a fatura é paga. Toque no card para ver a lista.</p>
       <p><b>Gasto realmente seu</b> — só a sua parte dos gastos, descontando o que é de outras pessoas na divisão. Conta pelo mês em que o pagamento está previsto (ex.: uma compra no crédito em setembro, com vencimento em outubro, entra em outubro). Toque no card para ver a lista.</p>
       <p><b>Saldo previsto</b> — Entradas menos Gasto realmente seu. É a sua sobra (ou falta) de dinheiro no mês, considerando só o que é realmente seu. Toque no card para ver a conta e as duas listas.</p>
-      <p><b>Planilha do mês</b> — o mesmo formato da sua planilha: despesas agrupadas por categoria (com o pagamento previsto e o subtotal), depois as entradas, a soma das entradas e o saldo do mês. Aqui os valores são cheios, então o saldo desta tabela pode ser menor que o Saldo previsto do topo.</p>
+      <p><b>Planilha do mês</b> — despesas por categoria, entradas e quatro indicadores: Total de saídas do mês (valor cheio), Total de gasto realmente seu (só as partes que pertencem a Você), Saldo total de saídas do mês (entradas menos as saídas cheias) e Saldo realmente seu do mês (entradas menos o seu gasto).</p>
     </details>
 
     <details class="card section">
@@ -355,13 +356,13 @@
 
     <details class="card section">
       <summary><h2>Empréstimos cedidos</h2></summary>
-      <p><b>A receber neste mês</b> — dinheiro que outras pessoas ainda te devem, da categoria "Empréstimos cedidos", com pagamento previsto neste mês. É uma previsão, não uma certeza — por isso não entra no Saldo previsto.</p>
-      <p><b>Emprestado neste mês</b> — quanto você cedeu a outras pessoas neste mês, nessa mesma categoria.</p>
+      <p><b>A receber neste mês</b> — dinheiro que outras pessoas ainda te devem, da categoria "Empréstimos cedidos", com pagamento previsto neste mês. Toque no quadro para ver os lançamentos e valores que compõem o total.</p>
+      <p><b>Emprestado neste mês</b> — quanto você cedeu a outras pessoas neste mês, nessa mesma categoria. Toque no quadro para ver os empréstimos registrados.</p>
     </details>
 
     <details class="card section">
       <summary><h2>Saídas previstas: pagas x não pagas</h2></summary>
-      <p>Do total de "Saídas previstas no mês", mostra quanto já foi marcado como pago e quanto ainda está previsto. Ajuda a acompanhar o que falta pagar até o fim do mês.</p>
+      <p>Do total de "Saídas previstas no mês", mostra quanto já foi marcado como pago e quanto ainda está previsto. Toque em cada barra para ver os lançamentos incluídos naquele valor.</p>
     </details>
 
     <details class="card section">

@@ -256,8 +256,13 @@ function renderDashboard(){
   const pendingSum=scheduled-paidSum;
   const paidPct=scheduled>0?Math.round(paidSum/scheduled*100):0, pendingPct=scheduled>0?100-paidPct:0;
   $("paymentStatusBars").innerHTML=scheduled>0
-    ? `<div class="bar-row"><div class="bar-label"><span>Saídas previstas já pagas (${paidPct}%)</span><b class="positive">${fmtMoney(paidSum)}</b></div><div class="bar"><i style="width:${paidPct}%;background:#15803d"></i></div></div><div class="bar-row"><div class="bar-label"><span>Saídas previstas não pagas (${pendingPct}%)</span><b class="warning">${fmtMoney(pendingSum)}</b></div><div class="bar"><i style="width:${pendingPct}%;background:#b45309"></i></div></div>`
+    ? `<div class="bar-row bar-click" data-payment-status="paid" role="button" tabindex="0" title="Ver as saídas previstas já pagas"><div class="bar-label"><span>Saídas previstas já pagas (${paidPct}%)</span><b class="positive">${fmtMoney(paidSum)}</b></div><div class="bar"><i style="width:${paidPct}%;background:#15803d"></i></div></div><div class="bar-row bar-click" data-payment-status="planned" role="button" tabindex="0" title="Ver as saídas previstas não pagas"><div class="bar-label"><span>Saídas previstas não pagas (${pendingPct}%)</span><b class="warning">${fmtMoney(pendingSum)}</b></div><div class="bar"><i style="width:${pendingPct}%;background:#b45309"></i></div></div>`
     : '<div class="empty">Nenhuma saída prevista neste mês.</div>';
+  $("paymentStatusBars").querySelectorAll("[data-payment-status]").forEach(el=>{
+    const open=()=>showPaymentStatusDetail(el.dataset.paymentStatus);
+    el.onclick=open;
+    el.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}};
+  });
 
   // Fluxo de caixa com filtro (Todos / Pagos / Não pagos); clicar no item leva ao lançamento
   const flows=sched.slice().sort((a,b)=>a.paymentDate.localeCompare(b.paymentDate)||(a.createdAt||0)-(b.createdAt||0));
@@ -383,6 +388,31 @@ function showCardDetail(id){
   openModal(`${c?.name||"Cartão"} · compras de ${fmtMonthLabel(month)}`,`<div class="muted" style="margin-bottom:8px">${rows.length} lançamento(s) · total <b>${fmtMoney(total)}</b></div>`+detailTable(rows,t=>t.value));
 }
 
+// Detalhes das barras "Saídas previstas: pagas x não pagas".
+function showPaymentStatusDetail(status){
+  const rows=scheduledPaymentsForMonth(month).filter(t=>status==="paid"?t.paymentStatus==="paid":t.paymentStatus!=="paid").sort(byNewest);
+  const total=rows.reduce((sum,t)=>sum+Number(t.value||0),0);
+  const title=status==="paid"?"Saídas previstas já pagas":"Saídas previstas não pagas";
+  openModal(`${title} · ${fmtMonthLabel(month)}`,`<div class="muted" style="margin-bottom:8px">${rows.length} lançamento(s) · total <b>${fmtMoney(total)}</b></div>`+detailTable(rows,t=>t.value));
+}
+
+// Abre os lançamentos individuais que compõem os valores do card "Empréstimos cedidos".
+function showLoanDetail(kind){
+  const receivable=kind==="receivable";
+  const items=[];
+  scheduledPaymentsForMonth(month).forEach(t=>(t.splits||[]).forEach(s=>{
+    if(s.category!==LOAN_CATEGORY)return;
+    if(receivable&&(s.ownerId==="self"||s.reimbursed===true))return;
+    const person=data.people.find(p=>p.id===s.ownerId);
+    items.push({t,s,person});
+  }));
+  items.sort((a,b)=>byNewest(a.t,b.t));
+  const total=items.reduce((sum,x)=>sum+Number(x.s.amount||0),0);
+  const title=receivable?"Empréstimos a receber":"Empréstimos cedidos neste mês";
+  const body=items.length?`<div class="table-wrap detail-table"><table><thead><tr><th>Data</th><th>Descrição</th><th>Pessoa</th><th>Pagamento previsto</th><th>Status</th><th class="right">Valor registrado</th></tr></thead><tbody>${items.map(({t,s,person})=>`<tr data-tx-id="${esc(t.id)}"><td data-label="Data">${fmtDate(t.date)}</td><td class="c-desc" data-label="Descrição"><b>${esc(t.description)}</b></td><td data-label="Pessoa">${esc(person?.name||(s.ownerId==="self"?"Você":"Outra pessoa"))}</td><td data-label="Pagamento previsto">${fmtDate(t.paymentDate||t.date)}</td><td data-label="Status">${t.paymentStatus==="paid"?"Pago":"Não pago"}${receivable?" · a receber":s.reimbursed===true?" · recebido":""}</td><td class="right" data-label="Valor registrado">${fmtMoney(s.amount)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">Nenhum lançamento compõe este valor neste mês.</div>';
+  openModal(`${title} · ${fmtMonthLabel(month)}`,`<div class="muted" style="margin-bottom:8px">${items.length} registro(s) da categoria "${esc(LOAN_CATEGORY)}" · total <b>${fmtMoney(total)}</b></div>`+body);
+}
+
 // ====================================================================
 // Planilha do mês: mesma visão da planilha de controle (despesas por categoria, entradas e saldo)
 // ====================================================================
@@ -406,16 +436,21 @@ function renderSheet(){
       html+=`<tr class="sheet-row sheet-g${gi%2}" data-g="${esc(g.name)}"${i===0?" data-gfirst":""} onclick="sheetRowClick('${x.id}')" title="Ver em Lançamentos">${i===0?`<td class="sheet-cat" rowspan="${g.items.length}" data-cat="${esc(g.name)}" onclick="event.stopPropagation()" title="Segure e arraste para mudar a ordem"><span class="grip">⠿</span> ${esc(g.name)}<div class="sheet-cat-sub">${fmtMoney(g.sub)}</div></td>`:""}<td>${esc(x.description)}${x.par}${who}</td><td class="sheet-date">${shortDate(x.date)}${x.paid?' <span class="positive" title="Já pago">✓</span>':""}</td><td class="right">${fmtMoney(x.amount)}</td>${i===0?`<td class="sheet-sub right" rowspan="${g.items.length}">${fmtMoney(g.sub)}</td>`:""}</tr>`;
     });
   });
-  html+=`<tr class="sheet-total sheet-out"><td colspan="3">Total gasto no mês</td><td colspan="2" class="right">${fmtMoney(model.totalOut)}</td></tr>`;
+  const scheduledForSheet=scheduledPaymentsForMonth(month);
+  const totalOut=scheduledForSheet.reduce((sum,t)=>sum+Number(t.value||0),0);
+  const totalOwn=scheduledForSheet.reduce((sum,t)=>sum+ownAmount(t),0);
+  html+=`<tr class="sheet-total sheet-out"><td colspan="3">Total de saídas do mês</td><td colspan="2" class="right">${fmtMoney(totalOut)}</td></tr>`;
+  html+=`<tr class="sheet-total sheet-out"><td colspan="3">Total de gasto realmente seu</td><td colspan="2" class="right">${fmtMoney(totalOwn)}</td></tr>`;
   model.inc.forEach((g,gj)=>{
     g.items.forEach((x,i)=>{
       html+=`<tr class="sheet-row sheet-in-g${gj%2}" onclick="sheetRowClick('${x.id}')" title="Ver em Lançamentos">${i===0?`<td class="sheet-cat sheet-cat-in" rowspan="${g.items.length}">${g.name}<div class="sheet-cat-sub">${fmtMoney(g.sub)}</div></td>`:""}<td>${esc(x.description)}</td><td class="sheet-date">${shortDate(x.date)}</td><td class="right">${fmtMoney(x.amount)}</td>${i===0?`<td class="sheet-sub right" rowspan="${g.items.length}">${fmtMoney(g.sub)}</td>`:""}</tr>`;
     });
   });
   html+=`<tr class="sheet-total sheet-in"><td colspan="3">Soma das entradas</td><td colspan="2" class="right">${fmtMoney(model.totalIn)}</td></tr>`;
-  html+=`<tr class="sheet-total sheet-bal"><td colspan="3">Saldo do mês</td><td colspan="2" class="right">${fmtMoney(model.bal)}</td></tr>`;
+  html+=`<tr class="sheet-total sheet-bal"><td colspan="3">Saldo total de saídas do mês</td><td colspan="2" class="right">${fmtMoney(model.totalIn-totalOut)}</td></tr>`;
+  html+=`<tr class="sheet-total sheet-bal"><td colspan="3">Saldo realmente seu do mês</td><td colspan="2" class="right">${fmtMoney(model.totalIn-totalOwn)}</td></tr>`;
 
-  box.innerHTML=`<div class="table-wrap sheet"><table class="sheet-table"><thead><tr><th>Categoria</th><th>Despesas e descrição</th><th>Pagamento previsto</th><th class="right">Valor previsto (R$)</th><th class="right sheet-th-sub">Soma por categoria</th></tr></thead><tbody>${html}</tbody></table></div><div class="field-note">💡 Segure uma categoria por meio segundo e arraste para mudar a ordem (a mesma ordem da aba Categorias). Os valores são cheios (incluem a parte de outras pessoas, marcada com o nome); por isso o Saldo do mês aqui pode ser menor que o "Saldo previsto" do topo. ✓ = já pago.</div>`;
+  box.innerHTML=`<div class="table-wrap sheet"><table class="sheet-table"><thead><tr><th>Categoria</th><th>Despesas e descrição</th><th>Pagamento previsto</th><th class="right">Valor previsto (R$)</th><th class="right sheet-th-sub">Soma por categoria</th></tr></thead><tbody>${html}</tbody></table></div><div class="field-note">💡 Segure uma categoria por meio segundo e arraste para mudar a ordem (a mesma ordem da aba Categorias). Total de saídas considera o valor cheio dos lançamentos; Total de gasto realmente seu soma apenas as partes atribuídas a Você. O saldo total subtrai todas as saídas das entradas; o saldo realmente seu subtrai apenas o seu gasto. ✓ = já pago.</div>`;
   initSheetDrag(box);   // liga o "segurar e arrastar" nas categorias (sheet-drag.js)
 }
 
