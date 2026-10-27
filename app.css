@@ -1,112 +1,166 @@
 /* ===== theme.css ===== */
-/* ============================================================
-   theme.css — cores dos temas
-   Variáveis de cor do modo claro (padrão) e do modo escuro. Para mudar uma cor do app, comece aqui.
-   ============================================================ */
-
-/* ===== Temas (claro / escuro): paleta no estilo Apple (cinza agrupado, cartões brancos, azul do sistema; escuro = preto puro) ===== */
+/* Cores e tokens. Tema claro (alternativa) e escuro "vidro fosco" (padrão, novo visual).
+   Todas as cores do app ficam AQUI. Para mudar o look, comece pelas variáveis abaixo. */
 :root{
   color-scheme:light;
   --header-h:64px;
-  --bg:#f2f2f7;--surface:#fff;--soft:#f2f2f7;--line:#e5e5ea;--line-strong:#d1d1d6;
-  --text:#1c1c1e;--muted:#8e8e93;--muted-strong:#636366;
-  --btn:#007aff;--btn-hover:#0a6fe0;--blue:#007aff;
-  --green:#248a3d;--red:#d70015;--red-solid:#ff3b30;--amber:#c93400;
-  --chip:#eeeef3;--hover:#e8e8ed;
-  --pill-bg:#e5f0ff;--pill-fg:#0a5cc7;
-  --info-bg:#e8f1ff;--info-fg:#0a5cc7;
-  --warn-bg:#fff4e0;--warn-line:#ffd9a0;--warn-fg:#8a4b00;
-  --bulk-bg:#e8f1ff;--bulk-line:#b9d6ff;
-  --flash:#ffe8a3;--input-bg:#f2f2f7;--ring:rgba(0,122,255,.28);
-  --shadow:0 1px 2px rgba(0,0,0,.04),0 2px 12px rgba(0,0,0,.04);
-  --glass:rgba(249,249,251,.80);--seg:rgba(118,118,128,.12);--seg-on:#fff;
-  --attn:#e07800;--out-bg:#fff;--own-bg:#fff;
-  --lift:0 8px 24px rgba(0,0,0,.14);--lift-soft:0 3px 10px rgba(0,0,0,.10);
+  /* fonte monoespaçada para números (valores, totais, saldos) */
+  --mono:"SF Mono","JetBrains Mono","JetBrains Mono NL",Menlo,Consolas,ui-monospace,monospace;
+  /* fundo e superfícies */
+  --bg:#f5f7fb;
+  --surface:rgba(255,255,255,.82);
+  --soft:#f2f5fa;
+  --line:rgba(15,23,42,.08);
+  --line-strong:rgba(15,23,42,.14);
+  /* tipografia */
+  --text:#0f172a;
+  --muted:#64748b;
+  --muted-strong:#475569;
+  /* ação principal e semânticas (paleta slate/emerald/rose/amber/cyan) */
+  --btn:#3b82f6;--btn-hover:#2563eb;--blue:#3b82f6;
+  --green:#059669;--red:#e11d48;--red-solid:#f43f5e;
+  --amber:#d97706;--attn:#ea580c;
+  /* chips, fundos e estados */
+  --chip:#eef2f8;--hover:#e2e8f0;
+  --pill-bg:#dbeafe;--pill-fg:#1d4ed8;
+  --info-bg:#e0f2fe;--info-fg:#0369a1;
+  --warn-bg:#fef3c7;--warn-line:#fcd34d;--warn-fg:#92400e;
+  --bulk-bg:#dbeafe;--bulk-line:#93c5fd;
+  --flash:#fef3c7;--input-bg:#f2f5fa;--ring:rgba(59,130,246,.28);
+  --shadow:0 1px 2px rgba(15,23,42,.04),0 2px 12px rgba(15,23,42,.05);
+  --glass:rgba(255,255,255,.78);--seg:rgba(15,23,42,.06);--seg-on:#fff;
+  --out-bg:#fff;--own-bg:#fff;
+  --lift:0 8px 24px rgba(15,23,42,.14);--lift-soft:0 3px 10px rgba(15,23,42,.10);
   --ease:cubic-bezier(.32,.72,0,1);
+  /* cores das bolinhas/ícones dos 4 cards do topo (tema claro) */
+  --dot-income:#10b981;--dot-out:#f59e0b;--dot-own:#f43f5e;--dot-balance:#06b6d4;
+  --dot-bg-income:rgba(16,185,129,.12);--dot-bg-out:rgba(245,158,11,.12);
+  --dot-bg-own:rgba(244,63,94,.12);--dot-bg-balance:rgba(6,182,212,.12);
+  /* cores da Planilha do mês (linhas zebradas) */
+  --sheet-a:#fff;--sheet-b:#f2f5fa;--sheet-in-a:#ecfdf5;--sheet-in-b:#d1fae5;
 }
+
+/* Tema escuro: "vidro fosco" sobre fundo quase-preto com brilho azul/roxo no topo. */
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --bg:#000;--surface:#1c1c1e;--soft:#2c2c2e;--line:#38383a;--line-strong:#48484a;
-  --text:#f5f5f7;--muted:#98989d;--muted-strong:#c7c7cc;
-  --btn:#0a84ff;--btn-hover:#3d9bff;--blue:#64a8ff;
-  --green:#30d158;--red:#ff6961;--red-solid:#ff453a;--amber:#ffb340;
-  --chip:#2c2c2e;--hover:#3a3a3c;
-  --pill-bg:#0f2a4d;--pill-fg:#7cb6ff;
-  --info-bg:#0f2a4d;--info-fg:#7cb6ff;
-  --warn-bg:#2e2200;--warn-line:#5c4300;--warn-fg:#ffcc66;
-  --bulk-bg:#0f2a4d;--bulk-line:#1d4a85;
-  --flash:#5b4b12;--input-bg:#2c2c2e;--ring:rgba(10,132,255,.45);
+  --bg:#080d14;
+  --surface:rgba(17,24,39,.72);
+  --soft:rgba(30,41,59,.45);
+  --line:rgba(255,255,255,.07);
+  --line-strong:rgba(255,255,255,.14);
+  --text:#e2e8f0;--muted:#94a3b8;--muted-strong:#cbd5e1;
+  --btn:#3b82f6;--btn-hover:#60a5fa;--blue:#60a5fa;
+  --green:#34d399;--red:#fb7185;--red-solid:#f43f5e;
+  --amber:#fbbf24;--attn:#fbbf24;
+  --chip:rgba(30,41,59,.65);--hover:rgba(51,65,85,.55);
+  --pill-bg:rgba(59,130,246,.15);--pill-fg:#93c5fd;
+  --info-bg:rgba(59,130,246,.12);--info-fg:#93c5fd;
+  --warn-bg:rgba(251,191,36,.08);--warn-line:rgba(251,191,36,.28);--warn-fg:#fbbf24;
+  --bulk-bg:rgba(59,130,246,.12);--bulk-line:rgba(59,130,246,.28);
+  --flash:rgba(251,191,36,.2);--input-bg:rgba(30,41,59,.5);--ring:rgba(59,130,246,.4);
   --shadow:none;
-  --glass:rgba(28,28,30,.82);--seg:rgba(118,118,128,.24);--seg-on:#636366;
-  --attn:#ff9f0a;--out-bg:#1c1c1e;--own-bg:#1c1c1e;
-  --lift:0 10px 28px rgba(0,0,0,.6);--lift-soft:0 4px 12px rgba(0,0,0,.5);
+  --glass:rgba(8,13,20,.72);--seg:rgba(148,163,184,.12);--seg-on:rgba(30,41,59,.9);
+  --out-bg:rgba(17,24,39,.72);--own-bg:rgba(17,24,39,.72);
+  --lift:0 10px 28px rgba(0,0,0,.55);--lift-soft:0 4px 12px rgba(0,0,0,.45);
+  --dot-income:#34d399;--dot-out:#fbbf24;--dot-own:#fb7185;--dot-balance:#22d3ee;
+  --dot-bg-income:rgba(52,211,153,.14);--dot-bg-out:rgba(251,191,36,.14);
+  --dot-bg-own:rgba(251,113,133,.14);--dot-bg-balance:rgba(34,211,238,.14);
+  --sheet-a:rgba(17,24,39,.6);--sheet-b:rgba(30,41,59,.55);
+  --sheet-in-a:rgba(16,185,129,.08);--sheet-in-b:rgba(16,185,129,.16);
 }
 
 /* ===== base.css ===== */
-/* ============================================================
-   base.css — estrutura geral
-   Cabeçalho, abas, cards, métricas, botões, formulários, tabelas e barras.
-   ============================================================ */
-
-/* ===== Base ===== */
+/* Estrutura geral: cabeçalho, abas, cards, métricas, botões, formulários, tabelas e barras. */
 html{scrollbar-gutter:stable;-webkit-text-size-adjust:100%}
-html.modal-open,html.modal-open body,html.confirm-open,html.confirm-open body{overflow:hidden}   /* com o painel aberto, só o painel rola (a tela de trás fica parada) */
+html.modal-open,html.modal-open body,html.confirm-open,html.confirm-open body{overflow:hidden}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Inter,Roboto,system-ui,"Segoe UI",Arial,sans-serif;font-size:15px;line-height:1.4;letter-spacing:-.01em;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Helvetica Neue",Inter,Roboto,system-ui,"Segoe UI",Arial,sans-serif;
+  font-size:15px;line-height:1.4;letter-spacing:-.01em;font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+/* fundo escuro com brilho radial azul/roxo no topo (efeito "aurora" do vidro fosco) */
+:root[data-theme="dark"] body{
+  background:radial-gradient(ellipse 900px 500px at 15% 0%,rgba(59,130,246,.10),transparent 60%),
+             radial-gradient(ellipse 800px 450px at 90% 0%,rgba(139,92,246,.08),transparent 60%),
+             var(--bg);
+  background-attachment:fixed;min-height:100vh}
 button,input,select{font:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--btn);outline-offset:2px}
 
-/* ===== Cabeçalho (não fica fixo: rola junto com a página) ===== */
+/* Cabeçalho (rola junto com a página; no escuro vira vidro) */
 .app-header{background:var(--bg);color:var(--text);padding:calc(14px + env(safe-area-inset-top,0px)) 20px 6px;position:static}
+:root[data-theme="dark"] .app-header{background:transparent}
 .topbar,.container{max-width:1220px;margin:auto}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
-.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;letter-spacing:-.025em}.brand-ico{width:30px;height:30px;border-radius:7px;box-shadow:0 0 0 .5px rgba(0,0,0,.18)}
+.brand{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;letter-spacing:-.025em}
+.brand-ico{width:30px;height:30px;border-radius:7px;box-shadow:0 0 0 .5px rgba(0,0,0,.18)}
 .ver{font-size:11px;font-weight:600;letter-spacing:0;padding:2px 8px;border-radius:99px;background:var(--seg);color:var(--muted-strong)}
 .subtitle{font-size:12px;color:var(--muted);margin:2px 0 0 40px}
 .top-actions,.row-actions{display:flex;gap:8px;flex-wrap:wrap}.row-actions.end{justify-content:flex-end}
 .top-actions{align-items:center}
 .app-header .btn{border-radius:999px;padding:9px 16px}
-.app-header .btn.light{background:var(--btn);color:#fff}.app-header .btn.light:hover{background:var(--btn-hover)}   /* Registrar gasto: ação principal, azul */
-.app-header .btn.primary{background:rgba(52,199,89,.16);color:var(--green)}.app-header .btn.primary:hover{background:rgba(52,199,89,.26)}   /* Registrar entrada: verde translúcido */
+/* Registrar gasto = azul; Registrar entrada = verde com brilho (como no painel de referência) */
+.app-header .btn.light{background:var(--btn);color:#fff;box-shadow:0 6px 18px -8px var(--btn)}
+.app-header .btn.light:hover{background:var(--btn-hover)}
+.app-header .btn.primary{background:var(--green);color:#0b1220;box-shadow:0 6px 18px -8px var(--green)}
+.app-header .btn.primary:hover{background:#10b981}
 .theme-toggle{background:var(--seg);color:var(--text);display:inline-flex;align-items:center;gap:6px}
 .theme-toggle:hover{background:var(--hover)}
 
-/* ===== Abas: controle segmentado (computador) e barra inferior translúcida (celular) ===== */
+/* Abas: controle segmentado no desktop, barra inferior no celular */
 .container{padding:12px 14px 40px}
 .tabs{display:flex;width:fit-content;max-width:100%;gap:2px;overflow:auto;padding:3px;margin:4px 0 18px;background:var(--seg);border-radius:12px;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
 .tab{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--text);padding:7px 16px;border-radius:9px;white-space:nowrap;font-weight:500;font-size:14px;transition:background .2s,color .2s,box-shadow .2s}
 .tab:hover{background:var(--hover)}
 .tab.active{background:var(--seg-on);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.14),0 0 0 .5px rgba(0,0,0,.05)}
+:root[data-theme="dark"] .tab.active{color:var(--blue);box-shadow:none}   /* no escuro: pílula azulada, sem sombra */
 .tab-ico{display:inline-flex}.tab-ico svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
-/* ===== Títulos e navegação de mês ===== */
+/* Títulos e navegação de mês */
 .page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:16px}
-.page-head h1{font-size:34px;font-weight:700;margin:0 0 4px;letter-spacing:-.032em;line-height:1.08}.page-head p{margin:0;max-width:760px;color:var(--muted)}
+.page-head h1{font-size:34px;font-weight:700;margin:0 0 4px;letter-spacing:-.032em;line-height:1.08}
+.page-head p{margin:0;max-width:760px;color:var(--muted)}
 .month-nav{display:flex;align-items:center;gap:6px}
-.month-nav .month{width:210px;min-width:0;height:42px;font-size:15px;font-weight:600;padding:0 10px}.page-head .month-nav .month{background:var(--surface)}
+.month-nav .month{width:210px;min-width:0;height:42px;font-size:15px;font-weight:600;padding:0 10px}
+.page-head .month-nav .month{background:var(--surface)}
 .month-step{width:42px;height:42px;padding:0;font-size:22px;line-height:1;display:inline-flex;align-items:center;justify-content:center;border-radius:50%}
 
-/* ===== Cards e métricas ===== */
+/* Cards e métricas (com vidro fosco). O .metric ganha borda colorida à esquerda e ícone no canto. */
 .metric-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
-.metric{background:var(--surface);border:0;border-radius:18px;padding:16px;box-shadow:var(--shadow);position:relative}
-.metric span{display:block;color:var(--muted);font-size:12px;font-weight:600;margin-bottom:6px}.metric strong{font-size:26px;font-weight:700;letter-spacing:-.03em}
-.metric>span:first-child::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--dot,var(--line-strong))}   /* bolinha colorida no lugar da faixa colorida */
-.m-income{--dot:#34c759}.m-out{--dot:#ff9500}.m-own{--dot:#ff3b30}.m-balance{--dot:#007aff}
+.metric{background:var(--surface);border:0;border-radius:18px;padding:16px 16px 16px 18px;box-shadow:var(--shadow);
+  position:relative;border-left:4px solid var(--dot,var(--line-strong));
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+:root[data-theme="dark"] .metric{border:1px solid var(--line);border-left:4px solid var(--dot,var(--line-strong))}
+.metric span{display:block;color:var(--muted);font-size:12px;font-weight:600;margin-bottom:6px}
+.metric>span:first-child{text-transform:uppercase;letter-spacing:.05em;font-size:11px;font-weight:700}   /* rótulo em caixa alta, como no painel de referência */
+.metric>span:first-child::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--dot,var(--line-strong))}   /* bolinha colorida */
+.metric strong{font-size:26px;font-weight:700;letter-spacing:-.03em;font-family:var(--mono)}   /* números em mono */
+/* ícone circular no canto superior direito de cada um dos 4 cards do topo (Lucide inline, sem CDN) */
+.metric::after{content:"";position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:10px;background:var(--dot-bg) center/18px no-repeat}
+.m-income{--dot:var(--dot-income);--dot-bg:var(--dot-bg-income)}
+.m-out{--dot:var(--dot-out);--dot-bg:var(--dot-bg-out)}
+.m-own{--dot:var(--dot-own);--dot-bg:var(--dot-bg-own)}
+.m-balance{--dot:var(--dot-balance);--dot-bg:var(--dot-bg-balance)}
+.m-income::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2334d399' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 7l-8.5 8.5-5-5L2 17'/%3E%3Cpath d='M16 7h6v6'/%3E%3C/svg%3E")}
+.m-out::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fbbf24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 17l-8.5-8.5-5 5L2 7'/%3E%3Cpath d='M16 17h6v-6'/%3E%3C/svg%3E")}
+.m-own::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fb7185' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M17 11l2 2 4-4'/%3E%3C/svg%3E")}
+.m-balance::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322d3ee' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12V7H5a2 2 0 0 1 0-4h14v4'/%3E%3Cpath d='M3 5v14a2 2 0 0 0 2 2h16v-5'/%3E%3Cpath d='M18 12a2 2 0 0 0 0 4h4v-4z'/%3E%3C/svg%3E")}
 
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
-.card,.table-card{background:var(--surface);border:0;border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.card,.table-card{background:var(--surface);border:0;border-radius:18px;padding:18px;box-shadow:var(--shadow);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+:root[data-theme="dark"] .card,:root[data-theme="dark"] .table-card{border:1px solid var(--line)}
 .table-card{padding:0;overflow:hidden}.table-wrap{overflow:auto}
 .card h2{font-size:19px;font-weight:700;letter-spacing:-.02em;margin:0}.card h3{margin:16px 0 7px}
 .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
-.section{margin-top:14px}#welcomeCard,#tutorialWelcomeCard{margin-bottom:14px}   /* cartão de boas-vindas não encosta nos cards de baixo */
+.section{margin-top:14px}#welcomeCard,#tutorialWelcomeCard{margin-bottom:14px}
 .filters{display:grid;grid-template-columns:auto 1fr 180px;gap:10px}
 
-/* ===== Formulários e botões ===== */
+/* Formulários e botões (campos "vidro fosco" no escuro) */
 label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 6px}
 input,select,textarea{width:100%;padding:11px 13px;border:1px solid transparent;border-radius:12px;background:var(--input-bg);color:var(--text)}
-select{-webkit-appearance:none;appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='16' viewBox='0 0 12 16' fill='none' stroke='%238e8e93' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 6l4-4 4 4M2 10l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}   /* setinhas ⌃⌄ como no iOS */
+select{-webkit-appearance:none;appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='16' viewBox='0 0 12 16' fill='none' stroke='%238e8e93' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 6l4-4 4 4M2 10l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
 select.import-type{-webkit-appearance:auto;appearance:auto;background-image:none}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--btn);box-shadow:0 0 0 3px var(--ring)}
 input[type=checkbox]{width:18px;height:18px;padding:0;margin:0;accent-color:var(--btn);cursor:pointer;flex:none}
@@ -116,14 +170,15 @@ textarea{font-family:inherit;resize:vertical}
 .btn.primary{background:var(--btn);color:#fff}.btn.primary:hover{background:var(--btn-hover)}
 .btn.light{background:var(--surface);color:var(--text)}
 .btn.ghost{background:var(--chip);color:var(--text)}.btn.ghost:hover{background:var(--hover)}
-.btn.danger{background:rgba(255,59,48,.12);color:var(--red)}.btn.danger:hover{background:var(--red-solid);color:#fff}
+.btn.danger{background:rgba(244,63,94,.12);color:var(--red)}.btn.danger:hover{background:var(--red-solid);color:#fff}
 .icon-btn{border:0;background:transparent;font-size:18px;color:var(--text)}.right{text-align:right}
 .muted{color:var(--muted)}.positive{color:var(--green)}.negative{color:var(--red)}.warning{color:var(--amber)}.attention{color:var(--attn)}
 .hidden{display:none!important}
 .hidden-file{position:fixed;top:-999px;left:-999px;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
 
-/* ===== Tabelas ===== */
-table{width:100%;border-collapse:collapse;min-width:1180px}th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;font-size:13px;vertical-align:top}
+/* Tabelas (valores em mono) */
+table{width:100%;border-collapse:collapse;min-width:1180px}
+th,td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;font-size:13px;vertical-align:top}
 th{background:transparent;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
 tbody tr:hover{background:var(--soft)}
 .select-col{width:1%;white-space:nowrap}
@@ -131,7 +186,7 @@ tbody tr:hover{background:var(--soft)}
 .pill{display:inline-flex;padding:4px 8px;border-radius:999px;background:var(--pill-bg);color:var(--pill-fg);font-size:11px;font-weight:600}
 .tag{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;background:var(--chip);font-size:11px;margin:2px 2px 0 0}
 
-/* ===== Barras ===== */
+/* Barras de progresso */
 .bar-row{margin:11px 0}.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
 .bar{height:8px;background:var(--chip);border-radius:999px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--btn);border-radius:999px;transition:width .5s var(--ease)}
@@ -139,14 +194,12 @@ tbody tr:hover{background:var(--soft)}
 .empty{padding:26px;color:var(--muted);text-align:center}
 .person-card,.rule-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
 .help p{line-height:1.5}.help p:last-child{margin-bottom:0}
-
-/* Detalhe "Como o reembolso funciona" dentro do card Pessoas (aba Regras) */
 .help-details{margin-top:12px}.help-details summary{cursor:pointer;font-weight:600;color:var(--muted-strong);padding:6px 0}
 
-/* Respeita quem prefere menos movimento (celulares com "reduzir animações" ligado) */
+/* Respeita "reduzir movimento" (acessibilidade) */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
 
-/* ===== Tela de bloqueio por PIN (bloqueio.js) ===== */
+/* Tela de bloqueio por PIN (bloqueio.js) */
 .lock-screen{display:none;position:fixed;inset:0;z-index:80;background:var(--bg);align-items:center;justify-content:center;padding:20px}
 html.locked .lock-screen{display:flex}
 html.locked,html.locked body{overflow:hidden}
@@ -163,62 +216,61 @@ html.locked .confirm-overlay{z-index:90}
 .integrity-item.fix{border-left:4px solid var(--green)}.integrity-item.warn{border-left:4px solid var(--amber)}
 
 /* ===== components.css ===== */
-/* ============================================================
-   components.css — componentes e telas específicas
-   Importação, avisos, seleção em massa, painel (modal), prévia de parcelas, Resumo, efeito de elevação e ajustes para celular.
-   ============================================================ */
-
-/* ===== Importação ===== */
+/* Componentes e telas específicas: importação, toast, painel, escolha, divisão, resumo, planilha, gráficos, confirmação, celular. */
 .dropzone{border:2px dashed var(--line-strong);border-radius:16px;padding:28px 16px;text-align:center;background:var(--soft);display:flex;flex-direction:column;gap:8px;align-items:center}
 .dropzone.drag{border-color:var(--btn);background:var(--info-bg)}.drop-icon{font-size:28px}.dropzone input{display:none}
 .status{margin-top:10px;padding:10px;border-radius:10px;background:var(--info-bg);color:var(--info-fg);font-size:13px}.preview{margin-top:14px}
 hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:rgba(15,23,42,.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);color:#fff;border:0;padding:12px 16px;border-radius:16px;display:none;z-index:30;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.35);max-width:calc(100% - 24px)}
+.toast.show{display:flex}.toast-action{background:transparent;color:#93c5fd;border:0;border-radius:8px;padding:6px 8px;font-weight:700;font-size:13px;cursor:pointer}
 
-/* ===== Aviso rápido ===== */
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;background:rgba(44,44,46,.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);color:#fff;border:0;padding:12px 16px;border-radius:16px;display:none;z-index:30;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:calc(100% - 24px)}
-.toast.show{display:flex}
-.toast-action{background:transparent;color:#64a8ff;border:0;border-radius:8px;padding:6px 8px;font-weight:700;font-size:13px;cursor:pointer}
-
-/* ===== Seleção em massa ===== */
+/* Seleção em massa (barra que aparece quando há itens marcados) */
 .bulkbar{margin:12px 0;padding:11px 14px;border:0;background:var(--bulk-bg);border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;position:sticky;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:4}
-.bulkbar input,.bulkbar select,.split input,.split select{background-color:var(--surface);border-color:var(--line-strong)}   /* campos sobre fundo cinza/azulado ficam brancos */
+.bulkbar input,.bulkbar select,.split input,.split select{background-color:var(--surface);border-color:var(--line-strong)}
 .bulkbar.hidden{display:none!important}
 .field-note{font-size:11px;color:var(--muted);margin-top:4px}
 .pay-planned{color:var(--amber)}.pay-paid{color:var(--green)}.pay-none{color:var(--muted)}
-.category-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}.category-name{display:flex;align-items:center;gap:8px;min-width:0}
-.cat-grip{color:var(--muted);font-size:20px;line-height:1;padding:6px 8px;margin:-6px -2px -6px -8px;touch-action:none;cursor:grab}   /* alça: arrasta na hora, sem precisar segurar */
+
+/* Arrastar categoria (aba Regras): alça ⠿ arrasta na hora */
+.category-row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.category-name{display:flex;align-items:center;gap:8px;min-width:0}
+.cat-grip{color:var(--muted);font-size:20px;line-height:1;padding:6px 8px;margin:-6px -2px -6px -8px;touch-action:none;cursor:grab}
 .category-row.cat-dragging{opacity:.35}
 .category-row.cat-drop-before{box-shadow:inset 0 4px 0 var(--btn)}
 .category-row.cat-drop-after{box-shadow:inset 0 -4px 0 var(--btn)}
 .split-actions{display:flex;gap:6px;flex-wrap:wrap}
-.cashflow-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.cashflow-item:last-child{border-bottom:0}
-.cashflow-main{display:flex;gap:8px;align-items:center}.cashflow-dot{width:9px;height:9px;border-radius:50%;background:#007aff;flex:none}.cashflow-dot.income{background:#34c759}.cashflow-dot.expense{background:#ff3b30}
 
-/* ===== Painel (modal) ===== */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px;z-index:25;overscroll-behavior:contain}
-.modal-box{background:var(--surface);color:var(--text);border-radius:22px;width:min(760px,100%);max-height:92vh;max-height:92dvh;overflow:auto;overscroll-behavior:contain;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.35);animation:pop-in .3s var(--ease)}
+/* Fluxo de caixa: item de lista com bolinha colorida */
+.cashflow-item{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}.cashflow-item:last-child{border-bottom:0}
+.cashflow-main{display:flex;gap:8px;align-items:center}.cashflow-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex:none}
+.cashflow-dot.income{background:#34d399}.cashflow-dot.expense{background:#fb7185}
+
+/* Painel (modal) com vidro fosco e alça no topo no celular */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:14px;z-index:25;overscroll-behavior:contain}
+.modal-box{background:var(--surface);color:var(--text);border-radius:22px;width:min(760px,100%);max-height:92vh;max-height:92dvh;overflow:auto;overscroll-behavior:contain;padding:20px;box-shadow:0 24px 70px rgba(0,0,0,.45);animation:pop-in .3s var(--ease);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+:root[data-theme="dark"] .modal-box{border:1px solid var(--line)}
 .modal-box.large{width:min(900px,100%)}
 .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.modal-head h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.025em}
-.modal-head .icon-btn{width:30px;height:30px;padding:0;border-radius:50%;background:var(--chip);color:var(--muted);font-size:13px;line-height:1}   /* ✕ redondo cinza, como no iOS */
+.modal-head .icon-btn{width:30px;height:30px;padding:0;border-radius:50%;background:var(--chip);color:var(--muted);font-size:13px;line-height:1}
 @keyframes pop-in{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:none}}
 @keyframes sheet-up{from{transform:translateY(100%)}to{transform:none}}
 .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.full{grid-column:1/-1}
-/* ===== Lista de escolha do app (openSelectSheet em 02-resumo.js): no lugar da lista nativa, que em alguns celulares abre fora da tela ===== */
-select:not([disabled]){pointer-events:none}   /* o toque no campo é tratado pelo app */
-.sel-sheet{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;overscroll-behavior:contain}
-.sel-box{width:min(520px,100%);max-height:70vh;max-height:70dvh;overflow:auto;overscroll-behavior:contain;background:var(--surface);color:var(--text);border-radius:24px 24px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.3);animation:sheet-up .38s var(--ease)}
-.sel-box::before,.modal-box::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:var(--line-strong);margin:0 auto 10px}   /* alça no topo da folha */
-.modal-box::before{display:none}
-.sel-title{position:sticky;top:-8px;z-index:1;background:var(--surface);font-weight:700;font-size:17px;text-align:center;padding:6px 2px 12px}   /* título fica visível ao rolar */
+
+/* Lista de escolha do app (substitui a nativa do celular) */
+select:not([disabled]){pointer-events:none}
+.sel-sheet{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;overscroll-behavior:contain}
+.sel-box{width:min(520px,100%);max-height:70vh;max-height:70dvh;overflow:auto;overscroll-behavior:contain;background:var(--surface);color:var(--text);border-radius:24px 24px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.4);animation:sheet-up .38s var(--ease);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+:root[data-theme="dark"] .sel-box{border:1px solid var(--line);border-bottom:0}
+.sel-box::before,.modal-box::before{content:"";display:block;width:36px;height:5px;border-radius:3px;background:var(--line-strong);margin:0 auto 10px}.modal-box::before{display:none}
+.sel-title{position:sticky;top:-8px;z-index:1;background:var(--surface);font-weight:700;font-size:17px;text-align:center;padding:6px 2px 12px}
 .sel-opt{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:50px;padding:12px 16px;margin:0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:var(--soft);color:var(--text);font-size:17px;text-align:left;cursor:pointer}
 .sel-title+.sel-opt{border-radius:14px 14px 0 0}.sel-opt:last-child{border-radius:0 0 14px 14px;border-bottom:0}.sel-title+.sel-opt:last-child{border-radius:14px}
-.sel-opt:active{background:var(--hover)}.sel-opt b{color:var(--btn);font-size:18px}
-.sel-opt.on{font-weight:600}
-.sel-opt:disabled{opacity:.5}
+.sel-opt:active{background:var(--hover)}.sel-opt b{color:var(--btn);font-size:18px}.sel-opt.on{font-weight:600}.sel-opt:disabled{opacity:.5}
+
+/* Divisão do gasto entre pessoas */
 .split-header{display:flex;justify-content:space-between;align-items:center;margin:15px 0 8px;gap:10px}
 .recurring-card-wrap{display:grid;gap:10px}
-.recurring-card{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--soft);cursor:pointer}
-.recurring-card{color:var(--text);font-size:14px;font-weight:400;margin:0}   /* é um <label>: não herda o cinza dos rótulos */
+.recurring-card{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--soft);cursor:pointer;color:var(--text);font-size:14px;font-weight:400;margin:0}
 .recurring-card input{width:18px;height:18px;accent-color:var(--btn);flex:none}
 .recurring-card span,.recurring-card small{display:block}
 .recurring-card b{font-size:13px}
@@ -227,22 +279,20 @@ select:not([disabled]){pointer-events:none}   /* o toque no campo é tratado pel
 .split{display:grid;grid-template-columns:minmax(0,1.2fr) 120px minmax(0,190px) minmax(0,1fr) 40px;gap:7px;align-items:end;background:var(--soft);padding:9px;border:1px solid var(--line);border-radius:14px;margin-bottom:7px}
 .split>*{min-width:0}
 .split small{display:block;color:var(--muted)}
-/* Cabeçalho de cada campo (rótulo + atalho "Criar ..."): MESMA altura em todas as colunas, para os campos ficarem alinhados e do mesmo tamanho */
 .fld-head{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:26px;margin-bottom:4px}
 .fld-head label{margin:0;white-space:nowrap}
 .mini-link{border:0;background:transparent;color:var(--btn);font-weight:700;font-size:11.5px;padding:3px 0 3px 6px;cursor:pointer;white-space:nowrap}
 .mini-link:hover{text-decoration:underline}
-/* "Criar na hora": ocupa o lugar do campo (mesma altura do select), então nada muda de tamanho */
-.split select,.split input.split-amount{height:44px;box-sizing:border-box}   /* todos os campos da linha com a mesma altura */
+.split select,.split input.split-amount{height:44px;box-sizing:border-box}
 .mini-create{display:flex;gap:4px;height:44px}
 .mini-create .mini-input{flex:1;width:auto;min-width:0;height:100%}
-.mini-create .btn{width:38px;height:100%;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}.split-total{display:flex;justify-content:space-between;padding:9px 0;font-weight:700}
+.mini-create .btn{width:38px;height:100%;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.split-total{display:flex;justify-content:space-between;padding:9px 0;font-weight:700}
 .reimbursed-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px;border:1px solid var(--line);border-radius:10px;margin:7px 0}
-.card-mini{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface);box-shadow:var(--shadow)}.card-mini h3{margin:0 0 5px}.card-mini .big{font-size:24px;font-weight:800}
+.card-mini{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface);box-shadow:var(--shadow)}.card-mini h3{margin:0 0 5px}
+.card-mini .big{font-size:24px;font-weight:800;font-family:var(--mono)}
 
-/* ===== Prévia das parcelas ===== */
-
-/* ===== Resumo: detalhes, listas e avisos ===== */
+/* Resumo: detalhes recolhíveis, listas, avisos, histórico */
 details.card summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
 details.card summary::-webkit-details-marker{display:none}
 details.card summary h2{display:flex;align-items:center;gap:8px}
@@ -252,9 +302,11 @@ details.card summary .pill{font-weight:600}
 .scroll-list{max-height:340px;overflow:auto;overscroll-behavior:contain}
 .loan-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .loan-box{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:12px}
-.loan-box-clickable{cursor:pointer;transition:background .15s ease,transform .15s ease}.loan-box-clickable:hover,.loan-box-clickable:focus-visible{background:var(--hover);outline:2px solid var(--ring);outline-offset:1px}.loan-box-clickable:active{transform:scale(.99)}
+.loan-box-clickable{cursor:pointer;transition:background .15s ease,transform .15s ease}
+.loan-box-clickable:hover,.loan-box-clickable:focus-visible{background:var(--hover);outline:2px solid var(--ring);outline-offset:1px}
+.loan-box-clickable:active{transform:scale(.99)}
 .loan-box span{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
-.loan-box strong{font-size:19px}
+.loan-box strong{font-size:19px;font-family:var(--mono)}
 .cashflow-link{cursor:pointer}.cashflow-link:hover b{text-decoration:underline}
 .detail-table table{min-width:0}
 tr.row-highlight{animation:rowFlash 2.8s ease}
@@ -266,62 +318,48 @@ tr.row-highlight{animation:rowFlash 2.8s ease}
 .activity-icon{font-size:15px;line-height:1.5}
 .activity-when{font-size:11px;white-space:nowrap}
 .activity-meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-.activity-undo{padding:4px 8px;font-size:11px}
-.activity-undone{color:var(--muted);font-size:11px}
+.activity-undo{padding:4px 8px;font-size:11px}.activity-undone{color:var(--muted);font-size:11px}
 @media(max-width:520px){.activity-item{grid-template-columns:20px 22px minmax(0,1fr)}.activity-meta{grid-column:3;flex-direction:row;justify-content:space-between;align-items:center}}
 .reminder-banner{margin-bottom:14px;padding:10px 13px;border:1px solid var(--warn-line);background:var(--warn-bg);color:var(--warn-fg);border-radius:12px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .reminder-banner .btn{padding:5px 10px;font-size:12px}
 .metric-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
 .metric-grid-4{grid-template-columns:repeat(4,1fr)}
-#tutorial details p{line-height:1.55;margin:0 0 10px}
-#tutorial details p:last-child{margin-bottom:0}
-#tutorial details+details{margin-top:10px}
+#tutorial details p{line-height:1.55;margin:0 0 10px}#tutorial details p:last-child{margin-bottom:0}#tutorial details+details{margin-top:10px}
 
-/* ===== Cards do topo clicáveis ===== */
+/* Cards do topo clicáveis */
 .metric.clickable{cursor:pointer;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease}
-.metric-pct{font-size:12px;font-weight:700;margin-top:3px}
+.metric-pct{font-size:12px;font-weight:700;margin-top:3px;font-family:var(--mono)}
 .metric-more{font-size:11px;color:var(--muted);margin-top:8px;font-weight:600}
 .bal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:6px}
 
-/* ===== Planilha do mês ===== */
-/* cores alternadas por categoria: uma clara e outra mais escura (como na planilha do Excel) */
-:root{--sheet-a:#fff;--sheet-b:#f2f2f7;--sheet-in-a:#f0faf3;--sheet-in-b:#e0f3e6}
-:root[data-theme="dark"]{--sheet-a:#1c1c1e;--sheet-b:#2c2c2e;--sheet-in-a:#10261a;--sheet-in-b:#173523}
+/* Planilha do mês (linhas zebradas, valores em mono) */
 .sheet-g0 td{background:var(--sheet-a)}.sheet-g1 td{background:var(--sheet-b)}
 .sheet-in-g0 td{background:var(--sheet-in-a)}.sheet-in-g1 td{background:var(--sheet-in-b)}
 tr[data-gfirst] td{border-top:2px solid var(--line-strong)}
-.sheet-table{min-width:520px}
-.sheet-table th,.sheet-table td{font-size:13px}
+.sheet-table{min-width:520px}.sheet-table th,.sheet-table td{font-size:13px}
 .sheet-cat{font-weight:700;border-right:1px solid var(--line-strong);min-width:120px;vertical-align:middle;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .sheet-cat .grip{color:var(--muted);font-weight:400}
-.sheet-cat-sub{display:none}
-.sheet-cat-in{color:var(--green)}
-.sheet-sub{font-weight:700;border-left:1px solid var(--line-strong);vertical-align:middle;white-space:nowrap}
-.sheet-date{white-space:nowrap;color:var(--muted)}
-.sheet-row{cursor:pointer}
-.sheet-row:hover td:not(.sheet-cat):not(.sheet-sub){background:var(--hover)}
-.sheet-total td{font-weight:800;font-size:14px;border-top:2px solid var(--line-strong)}
-.sheet-out td{background:rgba(255,59,48,.10);color:var(--red)}
-.sheet-in td{background:rgba(52,199,89,.14);color:var(--green)}
-.sheet-bal td{background:rgba(255,149,0,.16);color:var(--text)}
-/* arrastar categorias */
+.sheet-cat-sub{display:none}.sheet-cat-in{color:var(--green)}
+.sheet-sub{font-weight:700;border-left:1px solid var(--line-strong);vertical-align:middle;white-space:nowrap;font-family:var(--mono)}
+.sheet-date{white-space:nowrap;color:var(--muted);font-family:var(--mono)}
+.sheet-row{cursor:pointer}.sheet-row:hover td:not(.sheet-cat):not(.sheet-sub){background:var(--hover)}
+.sheet-total td{font-weight:800;font-size:14px;border-top:2px solid var(--line-strong);font-family:var(--mono)}
+.sheet-out td{background:rgba(244,63,94,.10);color:var(--red);font-family:var(--mono)}
+.sheet-in td{background:rgba(16,185,129,.14);color:var(--green);font-family:var(--mono)}
+.sheet-bal td{background:rgba(245,158,11,.16);color:var(--text);font-family:var(--mono)}
 .sheet-ghost{position:fixed;z-index:60;pointer-events:none;background:var(--btn);color:#fff;padding:8px 14px;border-radius:10px;font-weight:700;font-size:14px;box-shadow:var(--lift)}
 .sheet-drag-on,.sheet-drag-on *{user-select:none;-webkit-user-select:none;cursor:grabbing!important}
 tr.sheet-dragging td{opacity:.35}
 .sheet-drop-before td{box-shadow:inset 0 4px 0 var(--btn)}
 .sheet-drop-after td,td.sheet-drop-after{box-shadow:inset 0 -4px 0 var(--btn)}
 
-/* ===== Efeito ao passar o mouse e ao tocar (sutil, como no macOS/iOS) ===== */
+/* Efeito de elevação ao passar o mouse */
 .bar-click,.activity-item.clickable,.metric.clickable{transition:transform .25s var(--ease),box-shadow .25s ease,background .15s ease}
-@media (hover:hover) and (pointer:fine){
-  .metric.clickable:hover{transform:translateY(-2px);box-shadow:var(--lift)}
-  .bar-click:hover{background:var(--hover)}
-}
+@media (hover:hover) and (pointer:fine){.metric.clickable:hover{transform:translateY(-2px);box-shadow:var(--lift)}.bar-click:hover{background:var(--hover)}}
 .metric.clickable:active,.bar-click:active,.activity-item.clickable:active{transform:scale(.98)}
 @media (prefers-reduced-motion:reduce){.btn,.tab,.bar-click,.activity-item.clickable,.metric.clickable{transition:none}.metric.clickable:hover,.metric.clickable:active{transform:none}}
 
-
-/* ===== Telas menores ===== */
+/* Celular (até 980 px e 680 px): barra inferior, cards de "cartões" em listas, folhas de baixo. */
 @media(max-width:980px){.metric-grid{grid-template-columns:repeat(3,1fr)}.grid-2{grid-template-columns:1fr}}
 @media(max-width:680px){
   :root{--header-h:56px}
@@ -335,28 +373,23 @@ tr.sheet-dragging td{opacity:.35}
   .metric-grid,.metric-grid-4{grid-template-columns:repeat(2,1fr)}
   .filters{grid-template-columns:1fr}
   .form-grid{grid-template-columns:1fr}.full{grid-column:auto}
-  /* Divisão do gasto no celular: Categoria, Valor e Quem paga ocupam a linha inteira (campos grandes); Status e ✕ ficam na última linha */
-  .split{grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:12px}   /* minmax(0,1fr) impede que um campo "estoure" a largura do card */
+  .split{grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:12px}
   .split>*{min-width:0}
-  .split .category,.split .owner,.split>div:nth-child(2){grid-column:1/-1}   /* 2º filho = campo Valor */
+  .split .category,.split .owner,.split>div:nth-child(2){grid-column:1/-1}
   .split .person{grid-column:1/2}
   .mini-create{height:50px}.mini-create .mini-input{font-size:17px}.mini-create .btn{width:46px}
   .fld-head{min-height:24px}
   .split .remove-split{grid-column:2;height:44px;min-width:44px}
-  .split input,.split select,.split input.split-amount{width:100%;min-width:0;max-width:100%;height:50px;font-size:17px;padding:0 12px}   /* campos altos e fáceis de tocar (17px também evita o zoom automático do iPhone) */
-  .split .split-amount{font-size:20px;font-weight:600}   /* Valor em destaque */
+  .split input,.split select,.split input.split-amount{width:100%;min-width:0;max-width:100%;height:50px;font-size:17px;padding:0 12px}
+  .split .split-amount{font-size:20px;font-weight:600}
   .split-header{flex-direction:column;align-items:stretch}
   .loan-grid{grid-template-columns:1fr}
   .toast{left:12px;right:12px;transform:none;bottom:calc(78px + env(safe-area-inset-bottom,0px))}
-  /* ===== Compactação geral no celular (menos rolagem, tudo cabe na largura da tela) ===== */
-  html,body{max-width:100%;overflow-x:clip}
-  body{font-size:14.5px}
+  html,body{max-width:100%;overflow-x:clip}body{font-size:14.5px}
   .app-header{position:static}.bulkbar{top:0}
-  /* Cabeçalho no celular: nome do app em cima; embaixo tema + Registrar gasto + Registrar entrada dividem a largura (nada sai da tela) */
   .topbar{flex-wrap:wrap}.brand{font-size:19px;white-space:nowrap}
   .top-actions{width:100%;flex-wrap:nowrap}.top-actions .btn{flex:1 1 0;min-width:0;white-space:normal;line-height:1.2}.top-actions .theme-toggle{flex:0 0 auto}
   .container{padding:4px 16px calc(92px + env(safe-area-inset-bottom,0px))}
-  /* Barra de abas fixa embaixo da tela, translúcida, com ícones (como o iOS); some enquanto o teclado está aberto */
   .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;width:auto;display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin:0;padding:6px 2px calc(6px + env(safe-area-inset-bottom,0px));border-radius:0;overflow:visible;background:var(--glass);-webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px);border-top:1px solid var(--line)}
   body:has(input:focus,textarea:focus) .tabs{display:none}
   .tab{flex-direction:column;justify-content:center;gap:2px;min-width:0;padding:4px 0;font-size:9.5px;font-weight:500;letter-spacing:-.03em;color:var(--muted);border-radius:8px;overflow:hidden;text-overflow:ellipsis}
@@ -366,17 +399,15 @@ tr.sheet-dragging td{opacity:.35}
   .month-nav .month{height:40px;font-size:14px}.month-step{width:40px;height:40px}
   .card,.card-mini{padding:14px;border-radius:16px}.table-card{padding:0}
   .card h2{font-size:15px}
-  .metric-grid{gap:10px}.metric{padding:13px;border-radius:16px}.metric span{font-size:11.5px}.metric strong{font-size:21px}
+  .metric-grid{gap:10px}.metric{padding:13px 13px 13px 15px;border-radius:16px}.metric span{font-size:11.5px}.metric strong{font-size:21px}
   .metric-note,.metric-more{display:none}.metric-pct{font-size:11px}
   .btn{padding:9px 13px;font-size:14px}
-  input,select,textarea{padding:9px 10px;font-size:16px}   /* 16px evita o zoom automático ao tocar no campo */
+  input,select,textarea{padding:9px 10px;font-size:16px}
   label{font-size:11.5px}.bar-label{font-size:12px}
-  /* Painéis viram "folhas" que sobem de baixo, com alça no topo (como o iOS) */
   .modal{padding:0;align-items:flex-end}
   .modal-box{width:100%;max-width:100%;padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));border-radius:24px 24px 0 0;max-height:94vh;max-height:94dvh;animation:sheet-up .38s var(--ease)}
   .modal-box::before{display:block}.modal-head h2{font-size:20px}
   th,td{padding:8px;font-size:12px}
-  /* Lançamentos e listas de detalhe viram "cartões" (um por linha), sem rolar para o lado */
   .tx-table,.detail-table table{min-width:0}
   .tx-table thead,.detail-table thead{display:none}
   .tx-table,.tx-table tbody,.detail-table table,.detail-table tbody{display:block;width:100%}
@@ -385,24 +416,21 @@ tr.sheet-dragging td{opacity:.35}
   .tx-table td,.detail-table td{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;gap:12px;border:0;padding:2px 0;text-align:right;font-size:12.5px;min-width:0}
   .tx-table td[data-label]::before,.detail-table td[data-label]::before{content:attr(data-label);color:var(--muted);font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;text-align:left;flex:none}
   .tx-table td.c-desc,.detail-table td.c-desc{grid-column:1;grid-row:1;display:block;text-align:left;font-size:14px}
-  .tx-table td.c-val,.detail-table td.c-val{grid-column:2;grid-row:1;display:block;font-size:15px;font-weight:800;white-space:nowrap}
+  .tx-table td.c-val,.detail-table td.c-val{grid-column:2;grid-row:1;display:block;font-size:15px;font-weight:800;white-space:nowrap;font-family:var(--mono)}
   .tx-table td.c-act{padding-top:8px}
-  .tx-table thead{display:block}.tx-table thead tr{display:block;padding:10px 12px;border-bottom:1px solid var(--line)}.tx-table thead th{display:none}.tx-table thead th.select-col{display:block;width:auto;padding:0;border:0}   /* no celular o cabeçalho mostra só "Selecionar" (marca todos) */
-  .tx-table td.select-col{position:absolute;grid-column:auto;grid-row:auto;left:12px;top:14px;display:block;width:auto;padding:0}   /* grid-column:auto: sem isso a caixa ficava dentro da área da grade e cobria o nome */
-  .tx-table td.empty{display:block;text-align:center}
-  .c-empty{display:none!important}
-   /* Planilha do mês no celular: sem coluna lateral; o subtotal aparece embaixo do nome da categoria */
-  .sheet-table{min-width:0}
-  .sheet-table th,.sheet-table td{padding:7px 6px;font-size:12px}
-  .sheet-sub,.sheet-th-sub{display:none}
-  .sheet-cat{min-width:0;width:27%}
+  .tx-table thead{display:block}.tx-table thead tr{display:block;padding:10px 12px;border-bottom:1px solid var(--line)}.tx-table thead th{display:none}.tx-table thead th.select-col{display:block;width:auto;padding:0;border:0}
+  .tx-table td.select-col{position:absolute;grid-column:auto;grid-row:auto;left:12px;top:14px;display:block;width:auto;padding:0}
+  .tx-table td.empty{display:block;text-align:center}.c-empty{display:none!important}
+  .sheet-table{min-width:0}.sheet-table th,.sheet-table td{padding:7px 6px;font-size:12px}
+  .sheet-sub,.sheet-th-sub{display:none}.sheet-cat{min-width:0;width:27%}
   .sheet-cat-sub{display:block;font-size:11px;color:var(--muted);font-weight:700;margin-top:3px}
   .sheet-date{font-size:11px}
 }
 
-/* ===== Caixa de confirmação/aviso do app (askConfirm / askAlert) ===== */
-.confirm-overlay{position:fixed;inset:0;z-index:60;touch-action:none;background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px;overscroll-behavior:contain}
-.confirm-box{background:var(--surface);color:var(--text);border-radius:20px;width:min(310px,100%);padding:22px 0 0;text-align:center;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:confirm-in .22s var(--ease)}
+/* Caixa de confirmação/aviso do app (askConfirm / askAlert) */
+.confirm-overlay{position:fixed;inset:0;z-index:60;touch-action:none;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:18px;overscroll-behavior:contain}
+.confirm-box{background:var(--surface);color:var(--text);border-radius:20px;width:min(310px,100%);padding:22px 0 0;text-align:center;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45);animation:confirm-in .22s var(--ease);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+:root[data-theme="dark"] .confirm-box{border:1px solid var(--line)}
 .confirm-box h3{margin:0 0 6px;padding:0 20px;font-size:17px;font-weight:600}
 .confirm-box p{margin:0 0 20px;padding:0 20px;font-size:13.5px;color:var(--muted-strong);line-height:1.4;white-space:pre-line;overflow-wrap:anywhere}
 .confirm-actions{display:flex;border-top:1px solid var(--line)}
@@ -411,14 +439,13 @@ tr.sheet-dragging td{opacity:.35}
 .confirm-actions .btn:hover,.confirm-actions .btn:focus-visible{background:var(--hover);outline:none}.confirm-actions .btn:active{transform:none}
 .confirm-actions .btn.primary{font-weight:600}
 .confirm-actions .btn.danger{color:var(--red-solid);font-weight:600}.confirm-actions .btn.danger:hover{background:var(--hover);color:var(--red-solid)}
-
 @keyframes confirm-in{from{opacity:0;transform:scale(1.08)}to{opacity:1;transform:none}}
 
-/* ===== Gráficos do Resumo (graficos.js) ===== */
+/* Gráficos do Resumo (barras e rosca) */
 .chart-svg{width:100%;height:auto;display:block}
 .chart-svg text{fill:var(--muted);font-size:10.5px;font-family:inherit}
 .chart-svg .c-grid{stroke:var(--line);stroke-width:1}
-.chart-svg .c-inc{fill:#34c759}.chart-svg .c-own{fill:#ff3b30}
+.chart-svg .c-inc{fill:#34d399}.chart-svg .c-own{fill:#fb7185}
 .chart-svg .c-hit{fill:transparent}.chart-svg .c-hit.sel{fill:var(--soft)}
 .chart-svg .c-month{cursor:pointer;outline:none}
 .chart-svg .c-month:hover .c-hit,.chart-svg .c-month:focus-visible .c-hit{fill:var(--hover)}
@@ -430,10 +457,8 @@ tr.sheet-dragging td{opacity:.35}
 .trend-nav{display:flex;align-items:center;gap:6px;flex:none}
 .trend-nav .btn{width:34px;height:34px;padding:0;font-size:20px;line-height:1}
 .trend-nav .muted{font-size:11px;white-space:nowrap}
-.detail-table tbody tr[data-tx-id]{cursor:pointer}
-.detail-table tbody tr[data-tx-id]:hover{background:var(--hover)}
-.reimbursed-row[data-tx-id]{cursor:pointer}
-.reimbursed-row[data-tx-id]:hover{background:var(--hover)}
+.detail-table tbody tr[data-tx-id]{cursor:pointer}.detail-table tbody tr[data-tx-id]:hover{background:var(--hover)}
+.reimbursed-row[data-tx-id]{cursor:pointer}.reimbursed-row[data-tx-id]:hover{background:var(--hover)}
 .donut-wrap{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
 .chart-svg.donut{width:190px;flex:none}
 .chart-svg.donut .c-ring{stroke:var(--chip)}
@@ -447,22 +472,19 @@ tr.sheet-dragging td{opacity:.35}
 .budget-tag.over{background:var(--own-bg);color:var(--red);font-weight:700}
 .budget-tag.warn{background:var(--warn-bg);color:var(--warn-fg);font-weight:700}
 
-/* ===== Recorrentes ===== */
-.recur-row{align-items:flex-start}
-.recur-row .row-actions{flex-wrap:wrap;justify-content:flex-end}
-.recur-paused{opacity:.6}
+/* Recorrentes */
+.recur-row{align-items:flex-start}.recur-row .row-actions{flex-wrap:wrap;justify-content:flex-end}.recur-paused{opacity:.6}
 
-/* ===== Faixa do Modo demonstração ===== */
+/* Faixa do Modo demonstração */
 .demo-banner{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:9px 16px;background:var(--warn-bg);color:var(--warn-fg);border-bottom:1px solid var(--warn-line);font-size:13px;text-align:center}
 .demo-banner .btn{padding:5px 11px;font-size:12px}
 
-/* ===== Impressão / PDF do Resumo: fundo claro, sem botões, abas nem avisos ===== */
+/* Impressão / PDF do Resumo: fundo branco, sem botões nem abas */
 @media print{
   :root,:root[data-theme="dark"]{color-scheme:light;--bg:#fff;--surface:#fff;--soft:#f6f8fc;--line:#e4e9f2;--text:#0f172a;--muted:#64748b;--muted-strong:#475569;--green:#15803d;--red:#dc2626;--amber:#b45309;--chip:#eef1f7;--hover:#fff;--shadow:none}
   body{background:#fff}
   .app-header,.tabs,.demo-banner,.toast,.confirm-overlay,#modal,.reminder-banner,.btn,.bulkbar{display:none!important}
-  .page:not(#dashboard){display:none!important}
-  #dashboard{display:block!important}
+  .page:not(#dashboard){display:none!important}#dashboard{display:block!important}
   .card,.metric{box-shadow:none!important;break-inside:avoid}
   .bar-click{transform:none!important}
 }
